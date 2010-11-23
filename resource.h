@@ -45,7 +45,9 @@
 #define ID_AXIS_Z                       32779
 #define ID_LIGHT_SHADING_FLAT           32781
 #define ID_LIGHT_SHADING_GOURAUD        32782
-#define ID_LIGHT_CONSTANTS              32783
+#define ID_LIGHT_CONSTANTS              32783 
+#define ID_SPACE_OBJECT		            32784 // hw1
+#define ID_SPACE_SCREEN					32785 // hw1
 #define ID_ANIM_PLAY                    32793
 #define ID_ANIM_CLEAR                   32794
 #define ID_ANIM_SNAPSHOT                32795

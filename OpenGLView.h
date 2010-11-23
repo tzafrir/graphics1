@@ -45,6 +45,9 @@ private:
 	LightParams m_lights[MAX_LIGHT];	//configurable lights array
 	LightParams m_ambientLight;		//ambient light (only RGB is used)
 
+	CPoint lastClicked;				// hw1: 
+	int nSpace;						// hw1: object / view space 
+
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -111,6 +114,10 @@ protected:
 	afx_msg void OnLightShadingGouraud();
 	afx_msg void OnUpdateLightShadingGouraud(CCmdUI* pCmdUI);
 	afx_msg void OnLightConstants();
+
+	afx_msg void COpenGLView::Rotate(float angle);		//hw1
+	afx_msg void COpenGLView::Translate(int x, int y);	//hw1
+
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
