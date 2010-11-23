@@ -79,12 +79,13 @@ public:
 	}
 	Hw1Polygon(vector<Hw1Vertex*>* vertices, double normalX, double normalY,
 		double normalZ) : vertices(vertices), normal(normalX, normalY, normalZ) {}
+	void draw();
 };
 
 class Hw1Object {
-	float colorR;
-	float colorG;
-	float colorB;
+	double colorR;
+	double colorG;
+	double colorB;
 	vector<Hw1Polygon*>* polygons;
 	// TODO: Privates... same as above.
 public:
@@ -92,8 +93,9 @@ public:
 	Hw1Object(vector<Hw1Polygon*>* polygons) : polygons(polygons),
 	// Default color: white?
 		colorR(1.0), colorG(1.0), colorB(1.0) {}
-	Hw1Object(vector<Hw1Polygon*>* polygons, float colorR, float colorG, float colorB) :
+	Hw1Object(vector<Hw1Polygon*>* polygons, double colorR, double colorG, double colorB) :
 		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB) {}
+	void draw();
 };
 
 #endif  // HW1_PARSER_H
