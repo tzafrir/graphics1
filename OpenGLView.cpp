@@ -102,6 +102,9 @@ COpenGLView::COpenGLView()
 
 	//init the first light to be enabled
 	m_lights[LIGHT_ID_1].enabled=true;
+
+	lastClicked.SetPoint(0,0);	//hw1
+	nSpace = ID_SPACE_SCREEN;
 }
 
 COpenGLView::~COpenGLView()
@@ -370,14 +373,14 @@ void COpenGLView::OnDraw(CDC* pDC)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// clear screen and zbuffer
 
 	// draw just the axis
-	glPushMatrix();
-//	draw_axis();
+	//glPushMatrix();
+	draw_axis();
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
 		(*it)->draw();
 	}
-	glPopMatrix();
+	//glPopMatrix();
 
 	RenderScene();
 
@@ -676,14 +679,15 @@ void Hw1Polygon::draw() {
 }
 void COpenGLView::OnLButtonDblClk(UINT nFlags, CPoint point)
 {	
-	GLdouble Matrix[16]; 
-	glMatrixMode(GL_MODELVIEW_MATRIX) ; 
+	GLfloat matrix[16];
+	
+	
+	glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+	glLoadIdentity();
 	
 	glRotatef( 10, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
-	//glGetDoublev (GL_MODELVIEW_MATRIX, Matrix); 
-	//glPushMatrix();
-	//glPopMatrix();
-	//glMultMatrixd(Matrix);
+	glMultMatrixf(matrix);
+	
 	Invalidate();
 
 	CView::OnLButtonDblClk(nFlags, point);
@@ -691,23 +695,58 @@ void COpenGLView::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 BOOL COpenGLView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	if (zDelta >0)
-		glScalef(1.1,1.1,1.1);
-	else
-		glScalef(0.9,0.9,0.9);
+	float scale = 1 + zDelta/WHEEL_DELTA/4.0;
+	glScalef(scale , scale, scale);
 	Invalidate();
 	return CView::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+void COpenGLView::Rotate(float angle)
+{
+	if (nSpace == ID_SPACE_SCREEN){
+		GLfloat matrix[16];
+				
+		glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+		glLoadIdentity();
+		glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+		glMultMatrixf(matrix);
+	}else{
+		glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+	}
+}
+
+void COpenGLView::Translate(int x, int y)
+{	
+	if (nSpace == ID_SPACE_SCREEN){
+		GLfloat matrix[16];
+				
+		glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+		glLoadIdentity();
+		glTranslatef(x/100.0, y/100.0,0);
+		glMultMatrixf(matrix);
+	}else{
+		glTranslatef(float(x)/100.0, float(y)/100.0,0);
+	}
 }
 
 void COpenGLView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	float deltaX =0, deltaY =0 ;
-
+	
+	// get the mouse motion, relative to the point where the left button was clicked
 	if((nFlags & MK_LBUTTON) == MK_LBUTTON){
-		deltaX =  point.x;
-		deltaY =  point.y;
+			deltaX =  lastClicked.x - point.x;
+			deltaY =  lastClicked.y - point.y;
 	}
-	glRotatef( deltaX, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+
+	if (m_nAction == ID_ACTION_ROTATE){
+		Rotate(deltaX);
+	}
+	else if (m_nAction == ID_ACTION_TRANSLATE){
+		Translate(-deltaX, deltaY);
+	}
+	
 	Invalidate();
+	lastClicked = point;
 	CView::OnMouseMove(nFlags, point);
 }
