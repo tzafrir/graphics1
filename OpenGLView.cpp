@@ -481,9 +481,9 @@ void COpenGLView::OnFileLoad()
 	if (dlg.DoModal () == IDOK) {
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		PngWrapper p;
+		glLoadIdentity();
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
-		// Your code here...
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	} 
