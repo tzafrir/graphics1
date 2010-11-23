@@ -369,8 +369,10 @@ void COpenGLView::OnDraw(CDC* pDC)
 	// draw just the axis
 	glPushMatrix();
 //	draw_axis();
-	if (hw1Objects.size() > 0) {
-		hw1Objects.at(0)->draw();
+	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
+			it != hw1Objects.end();
+			++it) {
+		(*it)->draw();
 	}
 	glPopMatrix();
 
