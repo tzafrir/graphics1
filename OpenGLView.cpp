@@ -28,12 +28,6 @@ static char THIS_FILE[] = __FILE__;
 // Use this macro to display text messages in the status bar.
 #define STATUS_BAR_TEXT(str) (((CMainFrame*)GetParentFrame())->getStatusBar().SetWindowText(str))
 
-#include <vector>
-using std::vector;
-#include "hw1parser.h"
-
-extern vector<Hw1Object*> hw1Objects;
-
 /////////////////////////////////////////////////////////////////////////////
 // COpenGLView
 
@@ -368,10 +362,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 	// draw just the axis
 	glPushMatrix();
-//	draw_axis();
-	if (hw1Objects.size() > 0) {
-		hw1Objects.at(0)->draw();
-	}
+	draw_axis();
 	glPopMatrix();
 
 	RenderScene();
@@ -647,23 +638,4 @@ void COpenGLView::OnLightConstants()
 	    m_ambientLight = dlg.GetDialogData(LIGHT_ID_AMBIENT);
 	}	
 	Invalidate();
-}
-void Hw1Object::draw() {
-	glColor3f(colorR, colorG, colorB);
-	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
-			it != polygons->end();
-			++it) {
-		(*it)->draw();
-	}
-}
-
-void Hw1Polygon::draw() {
-	glBegin(GL_POLYGON);
-	for (vector<Hw1Vertex*>::iterator it = vertices->begin();
-			it != vertices->end();
-			++it) {
-		Hw1Vertex* v = *it;
-		glVertex3f(v->getX(), v->getY(), v->getZ());
-	}
-	glEnd();
 }
