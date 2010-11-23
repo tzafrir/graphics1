@@ -10,6 +10,15 @@ using std::vector;
  */
 vector<Hw1Object*> hw1Objects;
 
+static void clearObjects() {
+	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
+			it != hw1Objects.end();
+			++it) {
+		delete(*it);
+	}
+	hw1Objects.erase(hw1Objects.begin(), hw1Objects.end());
+}
+
 /*****************************************************************************
 * Skeleton for an interface to a parser to read IRIT data files.			 *
 ******************************************************************************
@@ -55,6 +64,9 @@ IPFreeformConvStateStruct CGSkelFFCState = {
 *****************************************************************************/
 bool CGSkelProcessIritDataFiles(CString &FileNames, int NumFiles)
 {
+	// Clear old object.
+	clearObjects();
+
 	IPObjectStruct *PObjects;
 	IrtHmgnMatType CrntViewMat;
 
