@@ -68,6 +68,9 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_UPDATE_COMMAND_UI(ID_LIGHT_SHADING_GOURAUD, OnUpdateLightShadingGouraud)
 	ON_COMMAND(ID_LIGHT_CONSTANTS, OnLightConstants)
 	//}}AFX_MSG_MAP
+	ON_WM_LBUTTONDBLCLK()
+	ON_WM_MOUSEWHEEL()
+	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
 
@@ -368,7 +371,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 	// draw just the axis
 	glPushMatrix();
-//	draw_axis();
+	draw_axis();
 	if (hw1Objects.size() > 0) {
 		hw1Objects.at(0)->draw();
 	}
@@ -417,6 +420,7 @@ void COpenGLView::draw_axis()
 	
 	const int NUM_OBJ = 9;
 	// Draw Axis x
+	glPushMatrix();
 	for(double i = 0 ; i <= NUM_OBJ ; i++){
 		glColor3f(1-i/NUM_OBJ, 0, 0+i/NUM_OBJ);
 		glBegin(GL_TRIANGLES);
@@ -426,8 +430,9 @@ void COpenGLView::draw_axis()
 		glEnd();
 		glRotated( 10, 0.0f, 0.0f, 1.0f );
 	}
+	glPopMatrix();
 
-	/*glColor3f(0, 1, 0);
+	glColor3f(0, 1, 0);
 	glBegin(GL_LINES);
 	glVertex3d(0,-0.1,0);
 	glVertex3d(0,   1,0);
@@ -447,7 +452,7 @@ void COpenGLView::draw_axis()
 	glPushMatrix();
 	glTranslatef( 0.0f, 0.0f, 1.0f );
 	auxSolidCone(0.05,0.5);
-	glPopMatrix();*/
+	glPopMatrix();
 
 	glLineWidth(1);			// return defaul line width
 
@@ -666,4 +671,41 @@ void Hw1Polygon::draw() {
 		glVertex3f(v->getX(), v->getY(), v->getZ());
 	}
 	glEnd();
+}
+void COpenGLView::OnLButtonDblClk(UINT nFlags, CPoint point)
+{	
+	GLdouble Matrix[16]; 
+	glMatrixMode(GL_MODELVIEW_MATRIX) ; 
+	
+	glRotatef( 10, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+	//glGetDoublev (GL_MODELVIEW_MATRIX, Matrix); 
+	//glPushMatrix();
+	//glPopMatrix();
+	//glMultMatrixd(Matrix);
+	Invalidate();
+
+	CView::OnLButtonDblClk(nFlags, point);
+}
+
+BOOL COpenGLView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	if (zDelta >0)
+		glScalef(1.1,1.1,1.1);
+	else
+		glScalef(0.9,0.9,0.9);
+	Invalidate();
+	return CView::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+void COpenGLView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	float deltaX =0, deltaY =0 ;
+
+	if((nFlags & MK_LBUTTON) == MK_LBUTTON){
+		deltaX =  point.x;
+		deltaY =  point.y;
+	}
+	glRotatef( deltaX, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+	Invalidate();
+	CView::OnMouseMove(nFlags, point);
 }

@@ -2,8 +2,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_OPENGLVIEW_H__5857316D_EA60_11D5_9FD5_00D0B718E2CD__INCLUDED_)
-#define AFX_OPENGLVIEW_H__5857316D_EA60_11D5_9FD5_00D0B718E2CD__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -115,16 +113,12 @@ protected:
 	afx_msg void OnLightConstants();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 };
-
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()
    { return (COpenGLDoc*)m_pDocument; }
 #endif
-
-/////////////////////////////////////////////////////////////////////////////
-
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_OPENGLVIEW_H__5857316D_EA60_11D5_9FD5_00D0B718E2CD__INCLUDED_)
