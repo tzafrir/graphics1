@@ -372,6 +372,8 @@ void COpenGLView::OnDraw(CDC* pDC)
 	// draw just the axis
 	glPushMatrix();
 //	draw_axis();
+	glScalef(0.5,0.5,0.5);
+	glRotatef(30.0, 1.0, 1.0, 0.0);
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
