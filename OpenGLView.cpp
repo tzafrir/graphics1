@@ -33,6 +33,7 @@ using std::vector;
 #include "hw1parser.h"
 
 extern vector<Hw1Object*> hw1Objects;
+extern void clearHw1Objects();
 
 /////////////////////////////////////////////////////////////////////////////
 // COpenGLView
@@ -109,6 +110,7 @@ COpenGLView::COpenGLView()
 
 COpenGLView::~COpenGLView()
 {
+	clearHw1Objects();
 }
 
 

@@ -10,7 +10,7 @@ using std::vector;
  */
 vector<Hw1Object*> hw1Objects;
 
-static void clearObjects() {
+void clearHw1Objects() {
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
@@ -65,7 +65,7 @@ IPFreeformConvStateStruct CGSkelFFCState = {
 bool CGSkelProcessIritDataFiles(CString &FileNames, int NumFiles)
 {
 	// Clear old object.
-	clearObjects();
+	clearHw1Objects();
 
 	IPObjectStruct *PObjects;
 	IrtHmgnMatType CrntViewMat;
