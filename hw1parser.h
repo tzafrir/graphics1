@@ -74,8 +74,8 @@ class Hw1Polygon {
 	Hw1Polygon& operator=(const Hw1Polygon& poly) {}
 public:
 	~Hw1Polygon() {
-	  for (vector<Hw1Vertex*>::iterator it = vertices.begin();
-	       it != vertices.end();
+	  for (vector<Hw1Vertex*>::iterator it = vertices->begin();
+	       it != vertices->end();
 	       ++it) {
       delete(*it);
 	  }
@@ -98,8 +98,8 @@ class Hw1Object {
 	Hw1Object& operator=(const Hw1Object& obj) {}
 public:
 	~Hw1Object() {
-	  for (vector<Hw1Object*>::iterator it = polygons.begin();
-	       it != polygons.end();
+	  for (vector<Hw1Polygon*>::iterator it = polygons->begin();
+	       it != polygons->end();
 	       ++it) {
       delete(*it);
 	  }
