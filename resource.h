@@ -46,19 +46,33 @@
 #define ID_LIGHT_SHADING_FLAT           32781
 #define ID_LIGHT_SHADING_GOURAUD        32782
 #define ID_LIGHT_CONSTANTS              32783
+#define ID_SPACE_OBJECT                 32784
+#define ID_SPACE_SCREEN                 32785
 #define ID_ANIM_PLAY                    32793
 #define ID_ANIM_CLEAR                   32794
 #define ID_ANIM_SNAPSHOT                32795
 #define ID_BUTTON_SUBDIVIDE             32797
 #define ID_OPTIONS_PERSPECTIVECONTROL   32798
 #define ID_OPTIONS_MOUSESENSITIVITY     32799
+#define ID_VIEW_MODELVIEW               32801
+#define ID_VIEW_CAMERAVIEW              32802
+#define ID_Menu                         32803
+#define ID_VIEW_VIEW1                   32804
+#define ID_VIEW_VIEW2                   32805
+#define ID_VIEW_VIEW3                   32806
+#define ID_VIEW_VIEW4                   32807
+#define ID_Menu32808                    32808
+#define ID_VIEW_MULTIPLR                32809
+#define ID_VIEW_MULTIPLEVIES            32810
+#define ID_VIEW_MULTIPLEVIEWS           32811
+#define ID_VIEW_MULTIPLEVIEWS32812      32812
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        139
-#define _APS_NEXT_COMMAND_VALUE         32801
+#define _APS_NEXT_COMMAND_VALUE         32813
 #define _APS_NEXT_CONTROL_VALUE         1040
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

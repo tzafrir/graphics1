@@ -33,7 +33,6 @@ public:
 		normal(18.18, 18.18, 18.18), hasNormal_(false) {}
 	Hw1Vertex(double x, double y, double z, double normalX, double normalY, double normalZ) :
 	    x(x), y(y), z(z), normal(normalX, normalY, normalZ), hasNormal_(true) {}
-	// TODO: Destructor.
 	double getX() {
 		return x;
 	}
@@ -71,9 +70,17 @@ class Hw1Polygon {
 		Hw1Normal normal(0.0, 0.0, 0.0);
 		return normal;
 	}
-	// TODO: private copy constructor and operator=.
+	Hw1Polygon(const Hw1Polygon& poly) {}
+	Hw1Polygon& operator=(const Hw1Polygon& poly) {}
 public:
-	// TODO: Destructor.
+	~Hw1Polygon() {
+	  for (vector<Hw1Vertex*>::iterator it = vertices->begin();
+	       it != vertices->end();
+	       ++it) {
+      delete(*it);
+	  }
+	  delete(vertices);
+	}
 	Hw1Polygon(vector<Hw1Vertex*>* vertices) : vertices(vertices) {
 		normal = calculateNormal();
 	}
@@ -87,9 +94,17 @@ class Hw1Object {
 	double colorG;
 	double colorB;
 	vector<Hw1Polygon*>* polygons;
-	// TODO: Privates... same as above.
+	Hw1Object(const Hw1Object& obj) {}
+	Hw1Object& operator=(const Hw1Object& obj) {}
 public:
-	// TODO: Destructor.
+	~Hw1Object() {
+	  for (vector<Hw1Polygon*>::iterator it = polygons->begin();
+	       it != polygons->end();
+	       ++it) {
+      delete(*it);
+	  }
+	  delete(polygons);
+	}
 	Hw1Object(vector<Hw1Polygon*>* polygons) : polygons(polygons),
 	// Default color: white?
 		colorR(1.0), colorG(1.0), colorB(1.0) {}
