@@ -47,7 +47,9 @@ private:
 
 	CPoint lastClicked;				// hw1: 
 	int nSpace;						// hw1: object / view space 
-
+	
+	bool multipleViews;				// hw1
+	int activeView;					// hw1
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -55,6 +57,10 @@ private:
 	public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+
+	typedef GLfloat mat16[16];
+	mat16 viewMatrix[4];
+
 	protected:
 	//}}AFX_VIRTUAL
 
@@ -97,6 +103,13 @@ protected:
 	afx_msg void OnUpdateViewOrthographic(CCmdUI* pCmdUI);
 	afx_msg void OnViewPerspective();
 	afx_msg void OnUpdateViewPerspective(CCmdUI* pCmdUI);
+	//hw1 start
+	afx_msg void OnViewModelview();
+	afx_msg void OnUpdateViewModelview(CCmdUI* pCmdUI);
+	afx_msg void OnViewCameraview();
+	afx_msg void OnUpdateViewCameraview(CCmdUI* pCmdUI);
+	afx_msg void OnMenu();
+	//hw1 end
 	afx_msg void OnActionRotate();
 	afx_msg void OnUpdateActionRotate(CCmdUI* pCmdUI);
 	afx_msg void OnActionScale();
@@ -124,6 +137,15 @@ public:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnViewView1();
+	afx_msg void OnUpdateViewView1(CCmdUI* pCmdUI);
+	afx_msg void OnViewView2();
+	afx_msg void OnUpdateViewView2(CCmdUI* pCmdUI);
+	afx_msg void OnViewView3();
+	afx_msg void OnUpdateViewView3(CCmdUI* pCmdUI);
+	afx_msg void OnViewView4();
+	afx_msg void OnUpdateViewView4(CCmdUI* pCmdUI);
+	afx_msg void OnViewMultipleviews();
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

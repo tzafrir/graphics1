@@ -75,13 +75,24 @@ BEGIN
     POPUP "&View"
     BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
-        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM "&Status Bar",                 ID_VIEW_TOOLBAR
+        MENUITEM "Multiple Views",              ID_VIEW_MULTIPLEVIEWS
         MENUITEM SEPARATOR
         MENUITEM "&Orthographic",               ID_VIEW_ORTHOGRAPHIC
         MENUITEM "&Perspective",                ID_VIEW_PERSPECTIVE
+        MENUITEM SEPARATOR
+        MENUITEM "&Camera View",                ID_VIEW_CAMERAVIEW
+        MENUITEM "&Model View",                 ID_VIEW_MODELVIEW
+        MENUITEM SEPARATOR
+        MENUITEM "View 1",                      ID_VIEW_VIEW1
+        MENUITEM "View 2",                      ID_VIEW_VIEW2
+        MENUITEM "View 3",                      ID_VIEW_VIEW3
+        MENUITEM "View 4",                      ID_VIEW_VIEW4
     END
     POPUP "A&ction"
     BEGIN
+        MENUITEM "Reset View",                  ID_Menu
+        MENUITEM SEPARATOR
         MENUITEM "&Rotate",                     ID_ACTION_ROTATE
         MENUITEM "&Translate",                  ID_ACTION_TRANSLATE
         MENUITEM "&Scale",                      ID_ACTION_SCALE
