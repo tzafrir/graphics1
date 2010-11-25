@@ -607,6 +607,13 @@ void COpenGLView::OnUpdateViewCameraview(CCmdUI* pCmdUI)
 void COpenGLView::OnMenu()
 {
 	glLoadIdentity();
+	for (int i=0 ; i<2 ; i++){
+		for (int j=0 ; j<2 ; j++){
+			for (int k=0 ; k<16 ; k++){
+				viewMatrix[2*i+j][k] = (k%5 == 0);
+			}
+		}
+	}
 	Invalidate();
 }
 
