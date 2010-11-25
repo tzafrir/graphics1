@@ -46,7 +46,8 @@ private:
 	LightParams m_ambientLight;		//ambient light (only RGB is used)
 
 	CPoint lastClicked;				// hw1: 
-	int nSpace;						// hw1: object / view space 
+	int nSpace;						// hw1: object / view space
+	bool m_bShowNormals;			// hw1: draw normals
 
 
 // Overrides

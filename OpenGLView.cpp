@@ -106,6 +106,7 @@ COpenGLView::COpenGLView()
 
 	lastClicked.SetPoint(0,0);	//hw1
 	nSpace = ID_SPACE_SCREEN;
+	m_bShowNormals = true;
 }
 
 COpenGLView::~COpenGLView()
@@ -385,6 +386,9 @@ void COpenGLView::OnDraw(CDC* pDC)
 			it != hw1Objects.end();
 			++it) {
 		(*it)->draw();
+		if (m_bShowNormals) {
+			(*it)->drawNormals();
+		}
 	}
 	glPopMatrix();
 
@@ -664,6 +668,9 @@ void COpenGLView::OnLightConstants()
 	}	
 	Invalidate();
 }
+
+// Drawing code for our objects ///////////////////////////////////
+
 void Hw1Object::draw() {
 	glColor3f(colorR, colorG, colorB);
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
@@ -683,6 +690,37 @@ void Hw1Polygon::draw() {
 	}
 	glEnd();
 }
+
+void Hw1Polygon::drawNormals() {
+	for (vector<Hw1Vertex*>::iterator it = vertices->begin();
+			it != vertices->end();
+			++it) {
+		Hw1Vertex* v = *it;
+		/*if (v->hasNormal()) {
+			Hw1Normal n = v->getNormal();
+			n.normalize();
+			n.x += v->getX();
+			n.y += v->getY();
+			n.z += v->getZ();
+			glBegin(GL_LINES);
+				glVertex3f(v->getX(), v->getY(), v->getZ());
+				glVertex3f(n.x, n.y, n.z);
+			glEnd();
+		}*/
+	}
+	glBegin(GL_LINES);
+		Hw1Vertex* v = vertices->at(0);
+		double x = v->getX();
+		double y = v->getY();
+		double z = v->getZ();
+		Hw1Normal n = normal;
+		glVertex3f(x, y, z);
+		glVertex3f(n.x + x, n.y + y, n.z + z);
+	glEnd();
+}
+
+// End drawing code /////////////////////////////////////////////
+
 void COpenGLView::OnLButtonDblClk(UINT nFlags, CPoint point)
 {	
 	GLfloat matrix[16];

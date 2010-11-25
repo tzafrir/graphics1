@@ -14,6 +14,12 @@ struct Hw1Normal {
 	 */
 	Hw1Normal() : x(0.0), y(0.0), z(0.0) {}
 	Hw1Normal(double x, double y, double z) : x(x), y(y), z(z) {}
+	void normalize() {
+		double size = sqrt(x*x + y*y + z*z);
+		x /= size;
+		y /= size;
+		z /= size;
+	}
 };
 
 class Hw1Vertex {
@@ -65,9 +71,26 @@ class Hw1Polygon {
 		// TODO: Calculate center.
 	}
 	Hw1Normal calculateNormal() {
-		// TODO: Calculate real normal.
-		// TODO: delete this placeholder code:
-		Hw1Normal normal(0.0, 0.0, 0.0);
+		double x = 0.0;
+		double y = 0.0;
+		double z = 0.0;
+		if (vertices->size() > 1) {
+			// Cross first two vertices:
+			Hw1Vertex* v1 = vertices->at(0);
+			Hw1Vertex* v2 = vertices->at(1);
+			double x1 = v1->getX();
+			double y1 = v1->getY();
+			double z1 = v1->getZ();
+			double x2 = v2->getX();
+			double y2 = v2->getY();
+			double z2 = v2->getZ();
+
+			x = y2*z1 - z2*y1;
+			y = z2*x1 - x2*z1;
+			z = x2*y1 - y2*x1;
+		}
+		Hw1Normal normal(x, y, z);
+		normal.normalize();
 		return normal;
 	}
 	Hw1Polygon(const Hw1Polygon& poly) {}
@@ -87,6 +110,7 @@ public:
 	Hw1Polygon(vector<Hw1Vertex*>* vertices, double normalX, double normalY,
 		double normalZ) : vertices(vertices), normal(normalX, normalY, normalZ) {}
 	void draw();
+	void drawNormals();
 };
 
 class Hw1Object {
@@ -111,6 +135,13 @@ public:
 	Hw1Object(vector<Hw1Polygon*>* polygons, double colorR, double colorG, double colorB) :
 		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB) {}
 	void draw();
+	void drawNormals() {
+		for (vector<Hw1Polygon*>::iterator it = polygons->begin();
+			    it != polygons->end();
+				++it) {
+			(*it)->drawNormals();
+		}
+	}
 };
 
 #endif  // HW1_PARSER_H
