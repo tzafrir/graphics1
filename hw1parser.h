@@ -179,7 +179,7 @@ public:
 		double maxX, double maxY, double maxZ) :
 		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB), minX(minX), minY(minY), minZ(minZ),
 		maxX(maxX), maxY(maxY), maxZ(maxZ) {}
-	void draw(bool drawBoundingBox);
+	void draw(bool drawBoundingBox, bool hasColor, double colorR, double colorG, double colorB);
 	void drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor) {
 		for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			    it != polygons->end();
