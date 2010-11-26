@@ -220,6 +220,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath=".\HW1Dialog.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\iritSkel.cpp"
 				>
 			</File>
@@ -376,6 +380,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath=".\HW1Dialog.h"
+				>
+			</File>
 			<File
 				RelativePath=".\hw1parser.h"
 				>

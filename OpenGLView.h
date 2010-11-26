@@ -13,6 +13,7 @@
 
 
 #include "Light.h"
+#include "HW1Dialog.h"	// sensitivity dialog
 
 class COpenGLView : public CView
 {
@@ -169,6 +170,7 @@ public:
 	afx_msg void OnUpdateViewPolygonsnormals(CCmdUI *pCmdUI);
 	afx_msg void OnViewVerticesnormals();
 	afx_msg void OnUpdateViewVerticesnormals(CCmdUI *pCmdUI);
+	afx_msg void OnOptionsMousesensitivity();
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

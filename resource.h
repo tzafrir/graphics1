@@ -3,10 +3,12 @@
 // Used by OpenGL.rc
 //
 #define IDD_ABOUTBOX                    100
+#define IDR_HTML_SENSDIAG               103
 #define IDR_MAINFRAME                   128
 #define IDR_OPENGLTYPE                  129
 #define IDD_LIGHTS_DLG                  134
 #define IDD_MATERIAL_DLG                136
+#define IDD_DIALOG1                     139
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -32,6 +34,7 @@
 #define IDC_LIGHT_TYPE                  1038
 #define IDC_MATERIAL_AMBIENT            1039
 #define IDC_MATERIAL_DIFFUSE            1040
+#define IDC_SCROLLBAR1                  1040
 #define IDC_MATERIAL_SHININESS          1041
 #define IDC_MATERIAL_SPECULAR           1042
 #define ID_FILE_LOAD                    32771
@@ -70,9 +73,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        139
+#define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         32823
-#define _APS_NEXT_CONTROL_VALUE         1040
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif

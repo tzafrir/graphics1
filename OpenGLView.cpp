@@ -95,6 +95,7 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_POLYGONSNORMALS, &COpenGLView::OnUpdateViewPolygonsnormals)
 	ON_COMMAND(ID_VIEW_VERTICESNORMALS, &COpenGLView::OnViewVerticesnormals)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_VERTICESNORMALS, &COpenGLView::OnUpdateViewVerticesnormals)
+	ON_COMMAND(ID_OPTIONS_MOUSESENSITIVITY, &COpenGLView::OnOptionsMousesensitivity)
 END_MESSAGE_MAP()
 
 
@@ -1152,3 +1153,11 @@ void COpenGLView::setProjection() {
  * Match default sensitivity to object size
  * Control the perspective matrix
  */
+void COpenGLView::OnOptionsMousesensitivity()
+{
+	HW1Dialog dlg(m_lNormalScale);
+	if (dlg.DoModal() == IDOK) {
+		m_lNormalScale = dlg.getVal();
+		Invalidate();
+	}
+}
