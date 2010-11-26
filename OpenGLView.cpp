@@ -110,6 +110,8 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 /////////////////////////////////////////////////////////////////////////////
 // COpenGLView construction/destruction
 
+double COpenGLView::zoomRatioDefault = 0.6;
+
 COpenGLView::COpenGLView()
 {
 
@@ -130,7 +132,8 @@ COpenGLView::COpenGLView()
 	//init the first light to be enabled
 	m_lights[LIGHT_ID_1].enabled=true;
 
-	m_lZoomRatio = 0.3; // hw1 zoom ratio
+	m_lZoomRatio = zoomRatioDefault; // hw1 zoom ratio
+	m_lPerspectiveWidthRatio = 1.0;
 	lastClicked.SetPoint(0,0);	//hw1
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
@@ -138,6 +141,8 @@ COpenGLView::COpenGLView()
 	m_bDrawBoundingBox = false;
 	nSpace = ID_SPACE_SCREEN;	//hw1
 	m_lCenterX = m_lCenterY = m_lCenterZ = 1.0;
+	m_lColorR = m_lColorG = m_lColorB = 1.0;
+	m_bChoseColor = false;
 	m_lTotalSize = 1.0;
 	multipleViews = false;
 	numViews = 1;
@@ -351,7 +356,8 @@ BOOL COpenGLView::SetupViewingFrustum(void)
 	//::gluPerspective( 40.0f, m_AspectRatio, 1.0, 256.0);
 	
 	double r = m_lZoomRatio;
-	glFrustum(-r * m_AspectRatio, r * m_AspectRatio, -r, r, 1.0, 20.0);
+	double q = r * m_lPerspectiveWidthRatio * m_AspectRatio;
+	glFrustum(-q, q, -r, r, 1.0, 20.0);
 
 	// NOTE: Other commands you could have here are
 	// glFrustum, which gives you much more control over
@@ -563,8 +569,8 @@ void COpenGLView::OnFileLoad()
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
 
-		// Reset normal scale.
-		Hw1Polygon::normalScale = Hw1Polygon::normalScaleDefault;
+		// Reset stuff;
+		OnMenu();
 
 		double minX, minY, minZ, maxX, maxY, maxZ;
 		bool setMinMax = false;
@@ -676,6 +682,9 @@ void COpenGLView::OnMenu()
 	}
 	Invalidate();
 	Hw1Polygon::normalScale = Hw1Polygon::normalScaleDefault;
+	m_lZoomRatio = zoomRatioDefault;
+	m_lPerspectiveWidthRatio = 1.0;
+	m_bChoseColor = false;
 }
 
 void COpenGLView::OnActionRotate() 
@@ -815,8 +824,13 @@ double Hw1Polygon::normalScale = 1.0;
 int Hw1Polygon::drawingMode = GL_POLYGON; // Set to GL_LINE_LOOP to get wireframe mode.
 double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
-void Hw1Object::draw(bool shouldDrawBoundingBox) {
-	glColor3f(colorR, colorG, colorB);
+void Hw1Object::draw(bool shouldDrawBoundingBox, bool hasColor, double cR, double cG,
+		double cB) {
+	if (hasColor) {
+		glColor3f(cR, cG, cB);
+	} else {
+		glColor3f(colorR, colorG, colorB);
+	}
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			it != polygons->end();
 			++it) {
@@ -945,6 +959,12 @@ BOOL COpenGLView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 }
 
 void COpenGLView::Scale(float scale){
+	if (m_bIsPerspective && multipleViews && (ID_SPACE_SCREEN == nSpace)) {
+		return;
+	} else if (m_bIsPerspective) {
+		m_lZoomRatio /= scale;
+		return;
+	}
 	for (int i=0 ; i<numViews ; i++){
 		glPushMatrix();
 		glLoadMatrixf(viewMatrix[i]);
@@ -1088,7 +1108,7 @@ void COpenGLView::drawAllObjects() {
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
-		(*it)->draw(m_bDrawBoundingBox);
+		(*it)->draw(m_bDrawBoundingBox, m_bChoseColor, m_lColorR, m_lColorG, m_lColorB);
 		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals, m_lTotalSize);
 	}
 }

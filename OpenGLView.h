@@ -46,20 +46,28 @@ private:
 	LightParams m_lights[MAX_LIGHT];	//configurable lights array
 	LightParams m_ambientLight;		//ambient light (only RGB is used)
 
+	static double zoomRatioDefault; // hw1 'constant'
+
 	CPoint lastClicked;				// hw1: 
 	int nSpace;						// hw1: object / view space
 	bool m_bShowNormals;			// hw1: draw normals
 	bool multipleViews;				// hw1
 	int activeView;					// hw1
-	double m_lNormalScale;			// hw1
+	double m_lNormalScale;			// hw1 $$: Larger -> larger normals
 	bool m_bDrawVertexNormals;		// hw1
 	double m_lCenterX;
 	double m_lCenterY;
 	double m_lCenterZ;
-	double m_lTotalSize;
-	double m_lZoomRatio;
-	bool m_bMayDraw;
-	bool m_bDrawBoundingBox;
+	double m_lColorR;	// $$$$$
+	double m_lColorG;	// $ User chosen color
+	double m_lColorB;	// $$$$$
+	bool m_bChoseColor; // $^ Set this to true when user chooses a color
+	double m_lTotalSize; // Diagonal of the box
+	double m_lZoomRatio; // Amount of zoom in perspective mode (managed by Scale() )
+	double m_lPerspectiveWidthRatio; // $$ How wide should the aspect ratio be in perspective mode
+	bool m_bMayDraw; // For internal use - lock for drawing
+	bool m_bDrawBoundingBox; // $$ Should draw bounding box around each object
+
 	void drawAllObjects(); // hw1
 	void setProjection();
 
