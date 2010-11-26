@@ -56,8 +56,11 @@ private:
 	double m_lCenterY;
 	double m_lCenterZ;
 	double m_lTotalSize;
+	double m_lZoomRatio;
 	bool m_bMayDraw;
+	bool m_bDrawBoundingBox;
 	void drawAllObjects(); // hw1
+	void setProjection();
 
 
 // Overrides

@@ -111,8 +111,7 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 
 COpenGLView::COpenGLView()
 {
-	//TODO: keyboard movement
-	//TODO: N models (4 kumkumim)
+
 
 	// Set default values
 	m_nAxis = ID_AXIS_X;
@@ -130,10 +129,12 @@ COpenGLView::COpenGLView()
 	//init the first light to be enabled
 	m_lights[LIGHT_ID_1].enabled=true;
 
+	m_lZoomRatio = 0.3; // hw1 zoom ratio
 	lastClicked.SetPoint(0,0);	//hw1
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
-	m_bMayDraw = false; // Wait until size nad center of object is calculated
+	m_bMayDraw = false; // Wait until size and center of object is calculated
+	m_bDrawBoundingBox = false;
 	nSpace = ID_SPACE_SCREEN;	//hw1
 	m_lCenterX = m_lCenterY = m_lCenterZ = 1.0;
 	m_lTotalSize = 1.0;
@@ -329,7 +330,8 @@ void COpenGLView::OnSize(UINT nType, int cx, int cy)
 	// select the viewing volume. You do it after you
 	// get the aspect ratio and set the viewport
 	//SetupViewingFrustum( );
-	SetupViewingOrthoConstAspect();
+	//SetupViewingOrthoConstAspect();
+	setProjection();
 
 	// now select the modelview matrix and clear it
 	// this is the mode we do most of our calculations in
@@ -343,8 +345,12 @@ void COpenGLView::OnSize(UINT nType, int cx, int cy)
 
 BOOL COpenGLView::SetupViewingFrustum(void)
 {
+	double windowSize = 4.0;
 	// select a default perspective viewing volumn
-	::gluPerspective( 40.0f, m_AspectRatio, 0.1f, 20.0f );
+	//::gluPerspective( 40.0f, m_AspectRatio, 1.0, 256.0);
+	
+	double r = m_lZoomRatio;
+	glFrustum(-r * m_AspectRatio, r * m_AspectRatio, -r, r, 1.0, 20.0);
 
 	// NOTE: Other commands you could have here are
 	// glFrustum, which gives you much more control over
@@ -418,6 +424,11 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 	// draw just the axis
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	setProjection();
+	glMatrixMode(GL_MODELVIEW);
+
 	glPushMatrix();
 //	draw_axis();
 	for (int  i=0; i<numViewsCol ;i++){
@@ -428,7 +439,10 @@ void COpenGLView::OnDraw(CDC* pDC)
 			// Show default view.
 
 			// load the view matrix and draw it
-			glMultMatrixf(viewMatrix[2*i+j]);
+			if (m_bIsPerspective) {
+				glTranslatef(0.0, 0.0, -5.0);
+			}
+			glMultMatrixf(viewMatrix[numViewsRows*i+j]);
 			glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
 
 			::glViewport(0+i*m_WindowWidth/numViewsCol, 0+j*m_WindowHeight/numViewsRows, 
@@ -438,8 +452,8 @@ void COpenGLView::OnDraw(CDC* pDC)
 		}
 	}
 	glPopMatrix();
-
 	RenderScene();
+
 
 	glFlush();
 	SwapBuffers(wglGetCurrentDC());
@@ -800,14 +814,16 @@ double Hw1Polygon::normalScale = 1.0;
 int Hw1Polygon::drawingMode = GL_POLYGON; // Set to GL_LINE_LOOP to get wireframe mode.
 double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
-void Hw1Object::draw() {
+void Hw1Object::draw(bool shouldDrawBoundingBox) {
 	glColor3f(colorR, colorG, colorB);
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			it != polygons->end();
 			++it) {
 		(*it)->draw();
 	}
-	drawBoundingBox();
+	if (shouldDrawBoundingBox) {
+		drawBoundingBox();
+	}
 }
 
 void Hw1Object::drawBoundingBox() {
@@ -1050,7 +1066,7 @@ void COpenGLView::OnUpdateViewView4(CCmdUI* pCmdUI)
 
 void COpenGLView::OnViewMultipleviews()
 {
-	numViews = (numViews == 1)? 4 : 1;					// must be X^2
+	numViews = (numViews == 1)? 100 : 1;					// must be X^2
 	numViewsCol = sqrt(double(numViews));
 	numViewsRows = numViewsCol;
 	multipleViews = (!multipleViews);
@@ -1071,7 +1087,7 @@ void COpenGLView::drawAllObjects() {
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
-		(*it)->draw();
+		(*it)->draw(m_bDrawBoundingBox);
 		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals, m_lTotalSize);
 	}
 }
@@ -1115,3 +1131,24 @@ void COpenGLView::OnUpdateViewVerticesnormals(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bDrawVertexNormals == true);
 }
+
+void COpenGLView::setProjection() {
+	if (m_bIsPerspective) {
+		SetupViewingFrustum();
+	} else {
+		SetupViewingOrthoConstAspect();
+	}
+}
+
+
+/* THIS IS TODO LIST   */
+
+/**
+ * Keyboard translation
+ * 2 models
+ * Color selection
+ * Sensitivity
+ * Scaling in perspective mode
+ * Match default sensitivity to object size
+ * Control the perspective matrix
+ */
