@@ -414,6 +414,8 @@ void COpenGLView::OnDraw(CDC* pDC)
 	// draw just the axis
 
 	glPushMatrix();
+	gluLookAt(m_lCenterX, m_lCenterY + m_lTotalSize, m_lCenterZ - m_lTotalSize * 2.0,
+		m_lCenterX, m_lCenterY, m_lCenterZ, 0.0, 1.0, 0.0);
 //	draw_axis();
 	if(multipleViews){
 		for (int  i=0; i<2 ;i++){
