@@ -52,6 +52,11 @@ private:
 	int activeView;					// hw1
 	double m_lNormalScale;			// hw1
 	bool m_bDrawVertexNormals;		// hw1
+	double m_lCenterX;
+	double m_lCenterY;
+	double m_lCenterZ;
+	double m_lTotalSize;
+	bool m_bMayDraw;
 	void drawAllObjects(); // hw1
 
 

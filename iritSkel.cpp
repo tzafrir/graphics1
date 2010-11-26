@@ -145,6 +145,9 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		return true;
 	}
 
+	double minX, maxX, minY, maxY, minZ, maxZ;
+	bool setMinMax = false;
+
 	/* You can use IP_IS_POLYGON_OBJ(PObj) and IP_IS_POINTLIST_OBJ(PObj) 
 	   to identify the type of the object*/
 
@@ -166,7 +169,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	}
 	if (Attrs != NULL) 
 	{
-		printf("[OBJECT\n");
+		//printf("[OBJECT\n");
 		while (Attrs) {
 			/* attributes code */
 			Attrs = AttrTraceAttributes(Attrs, NULL);
@@ -201,6 +204,20 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				double x = PVertex->Coord[0];
 				double y = PVertex->Coord[1];
 				double z = PVertex->Coord[2];
+				if (!setMinMax) {
+					minX = maxX = x;
+					minY = maxY = y;
+					minZ = maxZ = z;
+					setMinMax = true;
+				} else {
+					minX = min(minX, x);
+					minY = min(minY, y);
+					minZ = min(minZ, z);
+
+					maxX = max(maxX, x);
+					maxY = max(maxY, y);
+					maxZ = max(maxZ, z);
+				}
 				if (hasNormal) {
 					newVertex = new Hw1Vertex(x, y, z, PVertex->Normal[0],
 						PVertex->Normal[1], PVertex->Normal[2]);
@@ -224,9 +241,9 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	}
 	Hw1Object* newObject;
 	if (hasColor) {
-		newObject = new Hw1Object(polygonVector, RGB[0], RGB[1], RGB[2]);
+		newObject = new Hw1Object(polygonVector, RGB[0], RGB[1], RGB[2], minX, minY, minZ, maxX, maxY, maxZ);
 	} else {
-		newObject = new Hw1Object(polygonVector);
+		newObject = new Hw1Object(polygonVector, minX, minY, minZ, maxX, maxY, maxZ);
 	}
 	hw1Objects.push_back(newObject);
 	return true;
