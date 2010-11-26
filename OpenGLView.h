@@ -63,7 +63,11 @@ private:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
 	typedef GLfloat mat16[16];
-	mat16 viewMatrix[4];
+	static const int MAX_VIEWS = 100;			// must be equal to (int)^2
+	mat16 viewMatrix[MAX_VIEWS];
+	int numViews;
+	int numViewsRows;
+	int numViewsCol;
 
 	protected:
 	//}}AFX_VIRTUAL
@@ -132,6 +136,7 @@ protected:
 	afx_msg void OnUpdateLightShadingGouraud(CCmdUI* pCmdUI);
 	afx_msg void OnLightConstants();
 
+	afx_msg void COpenGLView::Scale(float scale);		//hw1
 	afx_msg void COpenGLView::Rotate(float angle);		//hw1
 	afx_msg void COpenGLView::Translate(int x, int y);	//hw1
 
@@ -150,6 +155,12 @@ public:
 	afx_msg void OnViewView4();
 	afx_msg void OnUpdateViewView4(CCmdUI* pCmdUI);
 	afx_msg void OnViewMultipleviews();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+
+	afx_msg void OnViewPolygonsnormals();
+	afx_msg void OnUpdateViewPolygonsnormals(CCmdUI *pCmdUI);
+	afx_msg void OnViewVerticesnormals();
+	afx_msg void OnUpdateViewVerticesnormals(CCmdUI *pCmdUI);
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

@@ -90,6 +90,11 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_COMMAND(ID_VIEW_VIEW4, &COpenGLView::OnViewView4)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_VIEW4, OnUpdateViewView4)
 	ON_COMMAND(ID_VIEW_MULTIPLEVIEWS, &COpenGLView::OnViewMultipleviews)
+	ON_WM_LBUTTONDOWN()
+	ON_COMMAND(ID_VIEW_POLYGONSNORMALS, &COpenGLView::OnViewPolygonsnormals)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_POLYGONSNORMALS, &COpenGLView::OnUpdateViewPolygonsnormals)
+	ON_COMMAND(ID_VIEW_VERTICESNORMALS, &COpenGLView::OnViewVerticesnormals)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_VERTICESNORMALS, &COpenGLView::OnUpdateViewVerticesnormals)
 END_MESSAGE_MAP()
 
 
@@ -126,16 +131,16 @@ COpenGLView::COpenGLView()
 	m_lights[LIGHT_ID_1].enabled=true;
 
 	lastClicked.SetPoint(0,0);	//hw1
-	m_bShowNormals = true;
-	m_bDrawVertexNormals = true;
+	m_bShowNormals = false;
+	m_bDrawVertexNormals = false;
 	nSpace = ID_SPACE_SCREEN;	//hw1
 	multipleViews = false;
+	numViews = 1;
+	numViewsRows = numViewsCol = sqrt(double(numViews));
 	activeView = 0;
-	for (int i=0 ; i<2 ; i++){
-		for (int j=0 ; j<2 ; j++){
-			for (int k=0 ; k<16 ; k++){
-				viewMatrix[2*i+j][k] = (k%5 == 0);
-			}
+	for (int i=0 ; i<MAX_VIEWS ; i++){
+		for (int k=0 ; k<16 ; k++){
+			viewMatrix[i][k] = (k%5 == 0);
 		}
 	}
 }
@@ -410,23 +415,18 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 	glPushMatrix();
 //	draw_axis();
-	if(multipleViews){
-		for (int  i=0; i<2 ;i++){
-			for (int j=0 ; j<2 ; j++){
-				// save the current matrix
-				mat16 matrix;
-				glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-				// load the view matrix and draw it
-				glMultMatrixf(viewMatrix[2*i+j]);
+	for (int  i=0; i<numViewsCol ;i++){
+		for (int j=0 ; j<numViewsRows ; j++){
+			// save the current matrix
+			glLoadIdentity();
+			// load the view matrix and draw it
+			glMultMatrixf(viewMatrix[2*i+j]);
 
-				::glViewport(0+i*m_WindowWidth/2, 0+j*m_WindowHeight/2, m_WindowWidth/2, m_WindowHeight/2);
-				
-				drawAllObjects();
-			}
+			::glViewport(0+i*m_WindowWidth/numViewsCol, 0+j*m_WindowHeight/numViewsRows, 
+									m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);
+			
+			drawAllObjects();
 		}
-	} else {
-		::glViewport(0, 0, m_WindowWidth, m_WindowHeight);
-		drawAllObjects();
 	}
 	glPopMatrix();
 
@@ -604,11 +604,9 @@ void COpenGLView::OnUpdateViewCameraview(CCmdUI* pCmdUI)
 void COpenGLView::OnMenu()
 {
 	glLoadIdentity();
-	for (int i=0 ; i<2 ; i++){
-		for (int j=0 ; j<2 ; j++){
-			for (int k=0 ; k<16 ; k++){
-				viewMatrix[2*i+j][k] = (k%5 == 0);
-			}
+	for (int i=0 ; i<MAX_VIEWS ; i++){
+		for (int k=0 ; k<16 ; k++){
+			viewMatrix[i][k] = (k%5 == 0);
 		}
 	}
 	Invalidate();
@@ -820,37 +818,72 @@ void COpenGLView::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 BOOL COpenGLView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	float scale = 1 + zDelta/WHEEL_DELTA/4.0;
-	glScalef(scale , scale, scale);
+	float sfloat = zDelta/WHEEL_DELTA/4.0;
+	Scale(1+sfloat);
 	Invalidate();
 	return CView::OnMouseWheel(nFlags, zDelta, pt);
 }
 
+void COpenGLView::Scale(float scale){
+	for (int i=0 ; i<numViews ; i++){
+		glPushMatrix();
+		glLoadMatrixf(viewMatrix[i]);
+		
+		if ((nSpace == ID_SPACE_SCREEN)&&(activeView == i)){
+			GLfloat matrix[16];
+					
+			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+			glLoadIdentity();
+			glScalef(scale , scale, scale);
+			glMultMatrixf(matrix);
+		}else if (nSpace == ID_SPACE_OBJECT){
+			glScalef(scale , scale, scale);
+		}
+		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+		glPopMatrix();
+	}
+}
+
+
 void COpenGLView::Rotate(float angle)
 {
-	if (nSpace == ID_SPACE_SCREEN){
-		GLfloat matrix[16];
-				
-		glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-		glLoadIdentity();
-		glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
-		glMultMatrixf(matrix);
-	}else{
-		glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+	for (int i=0 ; i<numViews ; i++){
+		glPushMatrix();
+		glLoadMatrixf(viewMatrix[i]);
+		
+		if ((nSpace == ID_SPACE_SCREEN)&&(activeView == i)){ // 
+			GLfloat matrix[16];
+					
+			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+			glLoadIdentity();
+			glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+			glMultMatrixf(matrix);
+		}else if (nSpace == ID_SPACE_OBJECT){
+			glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+		}
+
+		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+		glPopMatrix();
 	}
 }
 
 void COpenGLView::Translate(int x, int y)
 {	
-	if (nSpace == ID_SPACE_SCREEN) {
-		GLfloat matrix[16];
-	
-		glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-		glLoadIdentity();
-		glTranslatef(float(x)/200.0, float(y)/200.0,0);
-		glMultMatrixf(matrix);
-	} else {
-		glTranslatef(float(x)/200.0, float(y)/200.0,0);
+	for (int i=0 ; i<numViews ; i++){
+		glPushMatrix();
+		glLoadMatrixf(viewMatrix[i]);
+		if ((nSpace == ID_SPACE_SCREEN)&&(activeView == i)) {
+			GLfloat matrix[16];
+		
+			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+			glLoadIdentity();
+			glTranslatef(x/200.0, y/200.0,0);
+			glMultMatrixf(matrix);
+		} else if (nSpace == ID_SPACE_OBJECT){
+			glTranslatef(x/200.0, y/200.0,0);
+		}
+		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+		glPopMatrix();
 	}
 }
 
@@ -859,27 +892,16 @@ void COpenGLView::OnMouseMove(UINT nFlags, CPoint point)
 	float deltaX = 0, deltaY = 0;
 	// get the mouse motion, relative to the point where the left button was clicked
 	if((nFlags & MK_LBUTTON) == MK_LBUTTON){
-			deltaX =  lastClicked.x - point.x;
-			deltaY =  lastClicked.y - point.y;
+		deltaX =  lastClicked.x - point.x;
+		deltaY =  lastClicked.y - point.y;
 	}
 
-	if ((nSpace == ID_SPACE_SCREEN)&&(multipleViews)){
-		glPushMatrix();
-		glLoadMatrixf(viewMatrix[activeView]);
-	}
-
-	if (m_nAction == ID_ACTION_ROTATE){
-		Rotate(deltaX);
-	}
-	else if (m_nAction == ID_ACTION_TRANSLATE){
-		Translate(-deltaX, deltaY);
+	switch (m_nAction){
+		case ID_ACTION_ROTATE	: Rotate(deltaX);				break;
+		case ID_ACTION_TRANSLATE: Translate(-deltaX, deltaY);	break;
+		case ID_ACTION_SCALE	: Scale(1+deltaY/100.0);		break;
 	}
 	
-	if (nSpace == ID_SPACE_SCREEN){
-		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[activeView]);
-		glPopMatrix();
-	}
-
 	Invalidate();
 	lastClicked = point;
 	CView::OnMouseMove(nFlags, point);
@@ -925,7 +947,18 @@ void COpenGLView::OnUpdateViewView4(CCmdUI* pCmdUI)
 
 void COpenGLView::OnViewMultipleviews()
 {
+	numViews = (numViews == 1)? 4 : 1;					// must be X^2
+	numViewsCol = sqrt(double(numViews));
+	numViewsRows = numViewsCol;
 	multipleViews = (!multipleViews);
+	if (!multipleViews){
+		for (int i=1 ; i< numViews ; i++){
+			for (int k=0 ; k<16 ; k++){
+				viewMatrix[i][k] = viewMatrix[0][k];
+			}
+		}
+		activeView = 0;
+	}
 }
 
 void COpenGLView::drawAllObjects() {
@@ -935,4 +968,44 @@ void COpenGLView::drawAllObjects() {
 		(*it)->draw();
 		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals);
 	}
+}
+
+void COpenGLView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	if (multipleViews){	// find and set the active view
+		int i,j;
+		for (i=0 ; i< numViewsCol ; i++){
+			if (lastClicked.x < (i+1)*m_WindowWidth/numViewsCol){
+				break;
+			}
+		}
+		for (j=0 ; j< numViewsRows ; j++){
+			if (lastClicked.y < (j+1)*m_WindowHeight/numViewsRows){
+				break;
+			}
+		}
+		activeView = i*numViewsRows+(numViewsRows-j-1);
+	}
+
+	CView::OnLButtonDown(nFlags, point);
+}
+
+void COpenGLView::OnViewPolygonsnormals()
+{
+	m_bShowNormals = (!m_bShowNormals);
+}
+
+void COpenGLView::OnUpdateViewPolygonsnormals(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bShowNormals == true);
+}
+
+void COpenGLView::OnViewVerticesnormals()
+{
+	m_bDrawVertexNormals = (!m_bDrawVertexNormals);
+}
+
+void COpenGLView::OnUpdateViewVerticesnormals(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bDrawVertexNormals == true);
 }

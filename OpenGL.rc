@@ -76,6 +76,9 @@ BEGIN
     BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_TOOLBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Polygons Normals",            ID_VIEW_POLYGONSNORMALS
+        MENUITEM "Vertices Normals",            ID_VIEW_VERTICESNORMALS
         MENUITEM "Multiple Views",              ID_VIEW_MULTIPLEVIEWS
         MENUITEM SEPARATOR
         MENUITEM "&Orthographic",               ID_VIEW_ORTHOGRAPHIC

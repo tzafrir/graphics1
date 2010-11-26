@@ -61,18 +61,17 @@
 #define ID_VIEW_VIEW2                   32805
 #define ID_VIEW_VIEW3                   32806
 #define ID_VIEW_VIEW4                   32807
-#define ID_Menu32808                    32808
-#define ID_VIEW_MULTIPLR                32809
-#define ID_VIEW_MULTIPLEVIES            32810
 #define ID_VIEW_MULTIPLEVIEWS           32811
-#define ID_VIEW_MULTIPLEVIEWS32812      32812
+#define ID_RESET_VIEW                   32813
+#define ID_VIEW_POLYGONSNORMALS         32821
+#define ID_VIEW_VERTICESNORMALS         32822
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        139
-#define _APS_NEXT_COMMAND_VALUE         32813
+#define _APS_NEXT_COMMAND_VALUE         32823
 #define _APS_NEXT_CONTROL_VALUE         1040
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
