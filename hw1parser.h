@@ -67,8 +67,33 @@ class Hw1Polygon {
 	double centerX;
 	double centerY;
 	double centerZ;
+
+public:
+	// "Global" variable (Hw1Polygon::normalScale)
+	static double normalScale;
+	static double normalScaleDefault;
+private:
+
 	void calculateCenter() {
-		// TODO: Calculate center.
+		double x = 0.0;
+		double y = 0.0;
+		double z = 0.0;
+		int count = 0;
+		for (vector<Hw1Vertex*>::iterator it = vertices->begin();
+			 it != vertices->end();
+			 ++it) {
+			Hw1Vertex* v = *it;
+			count++;
+			x += v->getX();
+			y += v->getY();
+			z += v->getZ();
+		}
+		x /= (double)count;
+		y /= (double)count;
+		z /= (double)count;
+		centerX = x;
+		centerY = y;
+		centerZ = z;
 	}
 	Hw1Normal calculateNormal() {
 		double x = 0.0;
@@ -85,13 +110,17 @@ class Hw1Polygon {
 			double y2 = v2->getY();
 			double z2 = v2->getZ();
 
-			x = y2*z1 - z2*y1;
-			y = z2*x1 - x2*z1;
-			z = x2*y1 - y2*x1;
+			x = y1*z2 - z1*y2;
+			y = z1*x2 - x1*z2;
+			z = x1*y2 - y1*x2;
 		}
 		Hw1Normal normal(x, y, z);
 		normal.normalize();
 		return normal;
+	}
+	void initialize() {
+		calculateCenter();
+		normal.normalize();
 	}
 	Hw1Polygon(const Hw1Polygon& poly) {}
 	Hw1Polygon& operator=(const Hw1Polygon& poly) {}
@@ -106,11 +135,14 @@ public:
 	}
 	Hw1Polygon(vector<Hw1Vertex*>* vertices) : vertices(vertices) {
 		normal = calculateNormal();
+		initialize();
 	}
 	Hw1Polygon(vector<Hw1Vertex*>* vertices, double normalX, double normalY,
-		double normalZ) : vertices(vertices), normal(normalX, normalY, normalZ) {}
+			double normalZ) : vertices(vertices), normal(normalX, normalY, normalZ) {
+		initialize();
+	}
 	void draw();
-	void drawNormals();
+	void drawNormals(bool showNormals, bool drawVertexNormals);
 };
 
 class Hw1Object {
@@ -135,11 +167,11 @@ public:
 	Hw1Object(vector<Hw1Polygon*>* polygons, double colorR, double colorG, double colorB) :
 		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB) {}
 	void draw();
-	void drawNormals() {
+	void drawNormals(bool showNormals, bool drawVertexNormals) {
 		for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			    it != polygons->end();
 				++it) {
-			(*it)->drawNormals();
+			(*it)->drawNormals(showNormals, drawVertexNormals);
 		}
 	}
 };

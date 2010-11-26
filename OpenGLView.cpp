@@ -106,6 +106,9 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 
 COpenGLView::COpenGLView()
 {
+	//TODO: keyboard movement
+	//TODO: N models (4 kumkumim)
+
 	// Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
@@ -124,6 +127,7 @@ COpenGLView::COpenGLView()
 
 	lastClicked.SetPoint(0,0);	//hw1
 	m_bShowNormals = true;
+	m_bDrawVertexNormals = true;
 	nSpace = ID_SPACE_SCREEN;	//hw1
 	multipleViews = false;
 	activeView = 0;
@@ -390,10 +394,10 @@ BOOL COpenGLView::OnEraseBkgnd(CDC* pDC)
 }
 
 
-
 /////////////////////////////////////////////////////////////////////////////
 // COpenGLView drawing
 /////////////////////////////////////////////////////////////////////////////
+
 
 void COpenGLView::OnDraw(CDC* pDC)
 {
@@ -417,23 +421,12 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 				::glViewport(0+i*m_WindowWidth/2, 0+j*m_WindowHeight/2, m_WindowWidth/2, m_WindowHeight/2);
 				
-				for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
-						it != hw1Objects.end();
-						++it) {
-					(*it)->draw();
-				}
-				glLoadMatrixf(matrix);
+				drawAllObjects();
 			}
 		}
 	} else {
-
 		::glViewport(0, 0, m_WindowWidth, m_WindowHeight);
-		
-		for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
-				it != hw1Objects.end();
-				++it) {
-			(*it)->draw();
-		}
+		drawAllObjects();
 	}
 	glPopMatrix();
 
@@ -541,6 +534,8 @@ void COpenGLView::OnFileLoad()
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
 
+		// Reset normal scale.
+		Hw1Polygon::normalScale = Hw1Polygon::normalScaleDefault;
 		Invalidate();	// force a WM_PAINT for drawing.
 	} 
 
@@ -604,6 +599,8 @@ void COpenGLView::OnUpdateViewCameraview(CCmdUI* pCmdUI)
 
 // ACTION HANDLERS ///////////////////////////////////////////
 
+
+// TODO: rename this
 void COpenGLView::OnMenu()
 {
 	glLoadIdentity();
@@ -615,6 +612,7 @@ void COpenGLView::OnMenu()
 		}
 	}
 	Invalidate();
+	Hw1Polygon::normalScale = Hw1Polygon::normalScaleDefault;
 }
 
 void COpenGLView::OnActionRotate() 
@@ -749,6 +747,9 @@ void COpenGLView::OnLightConstants()
 
 // Drawing code for our objects ///////////////////////////////////
 
+double Hw1Polygon::normalScaleDefault = 1.0;
+double Hw1Polygon::normalScale = 1.0;
+
 void Hw1Object::draw() {
 	glColor3f(colorR, colorG, colorB);
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
@@ -769,32 +770,33 @@ void Hw1Polygon::draw() {
 	glEnd();
 }
 
-void Hw1Polygon::drawNormals() {
+void Hw1Polygon::drawNormals(bool showNormals, bool drawVertexNormals) {
 	for (vector<Hw1Vertex*>::iterator it = vertices->begin();
 			it != vertices->end();
 			++it) {
 		Hw1Vertex* v = *it;
-		/*if (v->hasNormal()) {
+		if (drawVertexNormals && v->hasNormal()) {
 			Hw1Normal n = v->getNormal();
 			n.normalize();
-			n.x += v->getX();
-			n.y += v->getY();
-			n.z += v->getZ();
+			n.x += v->getX() * normalScale;
+			n.y += v->getY() * normalScale;
+			n.z += v->getZ() * normalScale;
 			glBegin(GL_LINES);
 				glVertex3f(v->getX(), v->getY(), v->getZ());
 				glVertex3f(n.x, n.y, n.z);
 			glEnd();
-		}*/
+		}
 	}
-	glBegin(GL_LINES);
-		Hw1Vertex* v = vertices->at(0);
-		double x = v->getX();
-		double y = v->getY();
-		double z = v->getZ();
-		Hw1Normal n = normal;
-		glVertex3f(x, y, z);
-		glVertex3f(n.x + x, n.y + y, n.z + z);
-	glEnd();
+	if (showNormals) {
+		glBegin(GL_LINES);
+			Hw1Normal n = normal;
+			n.x += centerX * normalScale;
+			n.y += centerY * normalScale;
+			n.z += centerZ * normalScale;
+			glVertex3f(centerX, centerY, centerZ);
+			glVertex3f(n.x, n.y, n.z);
+		glEnd();
+	}
 }
 
 // End drawing code /////////////////////////////////////////////
@@ -808,7 +810,9 @@ void COpenGLView::OnLButtonDblClk(UINT nFlags, CPoint point)
 	
 	glRotatef( 10, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
 	glMultMatrixf(matrix);
-	
+	Hw1Polygon::normalScale += 1.5;
+
+
 	Invalidate();
 
 	CView::OnLButtonDblClk(nFlags, point);
@@ -922,4 +926,13 @@ void COpenGLView::OnUpdateViewView4(CCmdUI* pCmdUI)
 void COpenGLView::OnViewMultipleviews()
 {
 	multipleViews = (!multipleViews);
+}
+
+void COpenGLView::drawAllObjects() {
+	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
+			it != hw1Objects.end();
+			++it) {
+		(*it)->draw();
+		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals);
+	}
 }

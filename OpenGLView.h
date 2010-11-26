@@ -50,6 +50,10 @@ private:
 	bool m_bShowNormals;			// hw1: draw normals
 	bool multipleViews;				// hw1
 	int activeView;					// hw1
+	double m_lNormalScale;			// hw1
+	bool m_bDrawVertexNormals;		// hw1
+	void drawAllObjects(); // hw1
+
 
 // Overrides
 	// ClassWizard generated virtual function overrides
