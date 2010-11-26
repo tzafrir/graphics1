@@ -133,7 +133,10 @@ COpenGLView::COpenGLView()
 	lastClicked.SetPoint(0,0);	//hw1
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
+	m_bMayDraw = false; // Wait until size nad center of object is calculated
 	nSpace = ID_SPACE_SCREEN;	//hw1
+	m_lCenterX = m_lCenterY = m_lCenterZ = 1.0;
+	m_lTotalSize = 1.0;
 	multipleViews = false;
 	numViews = 1;
 	numViewsRows = numViewsCol = sqrt(double(numViews));
@@ -332,7 +335,9 @@ void COpenGLView::OnSize(UINT nType, int cx, int cy)
 	// this is the mode we do most of our calculations in
 	// so we leave it as the default mode.
 	::glMatrixMode(GL_MODELVIEW);
-	::glLoadIdentity();
+
+	// hw1: commented out to preserve state between resizes
+	//::glLoadIdentity();
 }
 
 
@@ -414,6 +419,8 @@ void COpenGLView::OnDraw(CDC* pDC)
 	// draw just the axis
 
 	glPushMatrix();
+	gluLookAt(m_lCenterX, m_lCenterY + m_lTotalSize, m_lCenterZ - m_lTotalSize * 2.0,
+		m_lCenterX, m_lCenterY, m_lCenterZ, 0.0, 1.0, 0.0);
 //	draw_axis();
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
@@ -531,11 +538,48 @@ void COpenGLView::OnFileLoad()
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		PngWrapper p;
 		glLoadIdentity();
+		m_bMayDraw = false;
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
 
 		// Reset normal scale.
 		Hw1Polygon::normalScale = Hw1Polygon::normalScaleDefault;
+
+		double minX, minY, minZ, maxX, maxY, maxZ;
+		bool setMinMax = false;
+		for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
+				it != hw1Objects.end();
+				++it) {
+				Hw1Object* o = *it;
+				if (!setMinMax) {
+					minX = o->getMinX();
+					maxX = o->getMaxX();
+					minY = o->getMinY();
+					maxY = o->getMaxY();
+					minZ = o->getMinZ();
+					maxZ = o->getMaxZ();
+					setMinMax = true;
+				} else {
+					minX = min(minX, o->getMinX());
+					minY = min(minY, o->getMinY());
+					minZ = min(minZ, o->getMinZ());
+					maxX = max(maxX, o->getMaxX());
+					maxY = max(maxY, o->getMaxY());
+					maxZ = max(maxZ, o->getMaxZ());
+				}
+		}
+		m_lCenterX = (minX + maxX) / 2.0;
+		m_lCenterY = (minY + maxY) / 2.0;
+		m_lCenterZ = (minZ + maxZ) / 2.0;
+		
+		// Calculate absolute size:
+		double x = m_lCenterX - minX;
+		double y = m_lCenterY - minY;
+		double z = m_lCenterZ - minZ;
+		m_lTotalSize = sqrt(x*x + y*y + z*z);
+
+		m_bMayDraw = true;
+
 		Invalidate();	// force a WM_PAINT for drawing.
 	} 
 
@@ -747,6 +791,8 @@ void COpenGLView::OnLightConstants()
 
 double Hw1Polygon::normalScaleDefault = 1.0;
 double Hw1Polygon::normalScale = 1.0;
+int Hw1Polygon::drawingMode = GL_POLYGON; // Set to GL_LINE_LOOP to get wireframe mode.
+double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
 void Hw1Object::draw() {
 	glColor3f(colorR, colorG, colorB);
@@ -755,10 +801,50 @@ void Hw1Object::draw() {
 			++it) {
 		(*it)->draw();
 	}
+	drawBoundingBox();
+}
+
+void Hw1Object::drawBoundingBox() {
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(minX, minY, minZ);
+		glVertex3f(minX, minY, maxZ);
+		glVertex3f(minX, maxY, maxZ);
+		glVertex3f(minX, maxY, minZ);
+	glEnd();
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(maxX, minY, minZ);
+		glVertex3f(maxX, minY, maxZ);
+		glVertex3f(maxX, maxY, maxZ);
+		glVertex3f(maxX, maxY, minZ);
+	glEnd();
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(minX, minY, minZ);
+		glVertex3f(minX, minY, maxZ);
+		glVertex3f(maxX, minY, maxZ);
+		glVertex3f(maxX, minY, minZ);
+	glEnd();
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(minX, maxY, minZ);
+		glVertex3f(minX, maxY, maxZ);
+		glVertex3f(maxX, maxY, maxZ);
+		glVertex3f(maxX, maxY, minZ);
+	glEnd();
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(minX, minY, minZ);
+		glVertex3f(maxX, minY, minZ);
+		glVertex3f(maxX, maxY, minZ);
+		glVertex3f(minX, maxY, minZ);
+	glEnd();
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(minX, minY, maxZ);
+		glVertex3f(maxX, minY, maxZ);
+		glVertex3f(maxX, maxY, maxZ);
+		glVertex3f(minX, maxY, maxZ);
+	glEnd();
 }
 
 void Hw1Polygon::draw() {
-	glBegin(GL_POLYGON);
+	glBegin(drawingMode);
 	for (vector<Hw1Vertex*>::iterator it = vertices->begin();
 			it != vertices->end();
 			++it) {
@@ -768,7 +854,8 @@ void Hw1Polygon::draw() {
 	glEnd();
 }
 
-void Hw1Polygon::drawNormals(bool showNormals, bool drawVertexNormals) {
+void Hw1Polygon::drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor) {
+	double actualSizeFactor = sizeFactor * sizeNormalizeFactor * normalScale;
 	for (vector<Hw1Vertex*>::iterator it = vertices->begin();
 			it != vertices->end();
 			++it) {
@@ -776,9 +863,14 @@ void Hw1Polygon::drawNormals(bool showNormals, bool drawVertexNormals) {
 		if (drawVertexNormals && v->hasNormal()) {
 			Hw1Normal n = v->getNormal();
 			n.normalize();
-			n.x += v->getX() * normalScale;
-			n.y += v->getY() * normalScale;
-			n.z += v->getZ() * normalScale;
+			n.x *= actualSizeFactor;
+			n.y *= actualSizeFactor;
+			n.z *= actualSizeFactor;
+
+			n.x += v->getX();
+			n.y += v->getY();
+			n.z += v->getZ();
+
 			glBegin(GL_LINES);
 				glVertex3f(v->getX(), v->getY(), v->getZ());
 				glVertex3f(n.x, n.y, n.z);
@@ -788,9 +880,14 @@ void Hw1Polygon::drawNormals(bool showNormals, bool drawVertexNormals) {
 	if (showNormals) {
 		glBegin(GL_LINES);
 			Hw1Normal n = normal;
-			n.x += centerX * normalScale;
-			n.y += centerY * normalScale;
-			n.z += centerZ * normalScale;
+			n.normalize();
+			n.x *= actualSizeFactor;
+			n.y *= actualSizeFactor;
+			n.z *= actualSizeFactor;
+
+			n.x += centerX;
+			n.y += centerY;
+			n.z += centerZ;
 			glVertex3f(centerX, centerY, centerZ);
 			glVertex3f(n.x, n.y, n.z);
 		glEnd();
@@ -962,11 +1059,14 @@ void COpenGLView::OnViewMultipleviews()
 }
 
 void COpenGLView::drawAllObjects() {
+	if (!m_bMayDraw) {
+		return;
+	}
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
 		(*it)->draw();
-		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals);
+		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals, m_lTotalSize);
 	}
 }
 

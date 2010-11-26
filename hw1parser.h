@@ -69,9 +69,11 @@ class Hw1Polygon {
 	double centerZ;
 
 public:
-	// "Global" variable (Hw1Polygon::normalScale)
+	// "Global" variables (Hw1Polygon::normalScale)
 	static double normalScale;
 	static double normalScaleDefault;
+	static double sizeNormalizeFactor;
+	static int drawingMode;
 private:
 
 	void calculateCenter() {
@@ -142,13 +144,19 @@ public:
 		initialize();
 	}
 	void draw();
-	void drawNormals(bool showNormals, bool drawVertexNormals);
+	void drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor);
 };
 
 class Hw1Object {
 	double colorR;
 	double colorG;
 	double colorB;
+	double minX;
+	double minY;
+	double minZ;
+	double maxX;
+	double maxY;
+	double maxZ;
 	vector<Hw1Polygon*>* polygons;
 	Hw1Object(const Hw1Object& obj) {}
 	Hw1Object& operator=(const Hw1Object& obj) {}
@@ -161,18 +169,42 @@ public:
 	  }
 	  delete(polygons);
 	}
-	Hw1Object(vector<Hw1Polygon*>* polygons) : polygons(polygons),
+	Hw1Object(vector<Hw1Polygon*>* polygons, double minX, double minY, double minZ,
+		double maxX, double maxY, double maxZ) : polygons(polygons),
 	// Default color: white?
-		colorR(1.0), colorG(1.0), colorB(1.0) {}
-	Hw1Object(vector<Hw1Polygon*>* polygons, double colorR, double colorG, double colorB) :
-		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB) {}
+		colorR(1.0), colorG(1.0), colorB(1.0), minX(minX), minY(minY), minZ(minZ),
+		maxX(maxX), maxY(maxY), maxZ(maxZ) {}
+	Hw1Object(vector<Hw1Polygon*>* polygons, double colorR, double colorG, double colorB,
+		double minX, double minY, double minZ,
+		double maxX, double maxY, double maxZ) :
+		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB), minX(minX), minY(minY), minZ(minZ),
+		maxX(maxX), maxY(maxY), maxZ(maxZ) {}
 	void draw();
-	void drawNormals(bool showNormals, bool drawVertexNormals) {
+	void drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor) {
 		for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			    it != polygons->end();
 				++it) {
-			(*it)->drawNormals(showNormals, drawVertexNormals);
+			(*it)->drawNormals(showNormals, drawVertexNormals, sizeFactor);
 		}
+	}
+	void drawBoundingBox();
+	double getMinX() {
+		return minX;
+	}
+	double getMinY() {
+		return minY;
+	}
+	double getMinZ() {
+		return minZ;
+	}
+	double getMaxX() {
+		return maxX;
+	}
+	double getMaxY() {
+		return maxY;
+	}
+	double getMaxZ() {
+		return maxZ;
 	}
 };
 
