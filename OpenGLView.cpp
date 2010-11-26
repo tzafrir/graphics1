@@ -373,13 +373,13 @@ BOOL COpenGLView::SetupViewingOrthoConstAspect(void)
 		// by MULTIPLYING by the aspect ration.
 		::glOrtho(  -windowSize*m_AspectRatio/2.0, windowSize*m_AspectRatio/2.0,
 			-windowSize/2.0, windowSize/2.0,
-			-windowSize*m_AspectRatio/2.0, windowSize*m_AspectRatio/2.0);
+			-windowSize*m_AspectRatio*2.0, windowSize*m_AspectRatio*20.0);
 	} else {
 		// Maintain x size and increase y size (and z) accordingly, 
 		// by DIVIDING the aspect Ration (because it's smaller than 1).
 		::glOrtho(  -windowSize/2.0, windowSize/2.0,
 			-windowSize/m_AspectRatio/2.0, windowSize/m_AspectRatio/2.0,
-			-windowSize/m_AspectRatio/2.0, windowSize/m_AspectRatio/2.0);
+			-windowSize/m_AspectRatio*2.0, windowSize/m_AspectRatio*2.0);
 	}
 
 	if ( GL_NO_ERROR != ::glGetError() ) {
@@ -419,15 +419,17 @@ void COpenGLView::OnDraw(CDC* pDC)
 	// draw just the axis
 
 	glPushMatrix();
-	gluLookAt(m_lCenterX, m_lCenterY + m_lTotalSize, m_lCenterZ - m_lTotalSize * 2.0,
-		m_lCenterX, m_lCenterY, m_lCenterZ, 0.0, 1.0, 0.0);
 //	draw_axis();
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
 			// save the current matrix
 			glLoadIdentity();
+
+			// Show default view.
+
 			// load the view matrix and draw it
 			glMultMatrixf(viewMatrix[2*i+j]);
+			glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
 
 			::glViewport(0+i*m_WindowWidth/numViewsCol, 0+j*m_WindowHeight/numViewsRows, 
 									m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);
@@ -537,7 +539,11 @@ void COpenGLView::OnFileLoad()
 	if (dlg.DoModal () == IDOK) {
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
 		PngWrapper p;
-		glLoadIdentity();
+		for (int i = 0; i < numViews; i++) {
+			for (int k=0 ; k<16 ; k++){
+				viewMatrix[i][k] = (k%5 == 0);
+			}
+		}
 		m_bMayDraw = false;
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
 		// Open the file and read it.
