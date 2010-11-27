@@ -1,8 +1,5 @@
 #pragma once
 
-#ifdef _WIN32_WCE
-#error "CDHtmlDialog is not supported for Windows CE."
-#endif 
 
 // perspectiveDialog dialog
 

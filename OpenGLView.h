@@ -13,7 +13,6 @@
 
 
 #include "Light.h"
-#include "HW1Dialog.h"	// sensitivity dialog
 #include "afxdlgs.h"
 
 class COpenGLView : public CView
@@ -63,7 +62,17 @@ private:
 	double m_lColorR;	// $$$$$
 	double m_lColorG;	// $ User chosen color
 	double m_lColorB;	// $$$$$
+	
+	double m_backColorR;	// $$$$$
+	double m_backColorG;	// $ User background chosen color
+	double m_backColorB;	// $$$$$
+	bool m_backChoseColor;
+	
+	double m_activeColorR;	// $$$$$
+	double m_activeColorG;	// $ User highlight chosen color
+	double m_activeColorB;	// $$$$$
 	bool m_bIsActiveView;
+
 	bool m_bChoseColor; // $^ Set this to true when user chooses a color
 	double m_lTotalSize; // Diagonal of the box
 	double m_lZoomRatio; // Amount of zoom in perspective mode (managed by Scale() )
@@ -190,6 +199,8 @@ public:
 	afx_msg void OnUpdateViewMultipleviews(CCmdUI *pCmdUI);
 	afx_msg void OnActionSetcolor();
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnActionSetbackgroundcolor();
+	afx_msg void OnActionResetcolors();
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

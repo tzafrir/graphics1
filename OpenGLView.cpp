@@ -34,6 +34,7 @@ using std::vector;
 #include "hw1parser.h"
 #include "sensitivityDialog.h"
 #include "perspectiveDialog.h"
+#include "multiViewsDialog.h"
 
 extern vector<Hw1Object*> hw1Objects;
 extern void clearHw1Objects();
@@ -105,6 +106,8 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_MULTIPLEVIEWS, &COpenGLView::OnUpdateViewMultipleviews)
 	ON_COMMAND(ID_ACTION_SETCOLOR, &COpenGLView::OnActionSetcolor)
 	ON_WM_KEYDOWN()
+	ON_COMMAND(ID_ACTION_SETBACKGROUNDCOLOR, &COpenGLView::OnActionSetbackgroundcolor)
+	ON_COMMAND(ID_ACTION_RESETCOLORS, &COpenGLView::OnActionResetcolors)
 END_MESSAGE_MAP()
 
 
@@ -152,8 +155,11 @@ COpenGLView::COpenGLView()
 	m_lNormalScale = 1.0;
 	nSpace = ID_SPACE_SCREEN;	//hw1
 	m_lCenterX = m_lCenterY = m_lCenterZ = 1.0;
-	m_lColorR = m_lColorG = m_lColorB = 1.0;
+	m_lColorR = m_lColorG = m_lColorB = 0.0;
+	m_backColorR = m_backColorG = m_backColorB = 0.0;
+	m_activeColorR = m_activeColorG = m_activeColorB = 0.5;
 	m_bChoseColor = false;
+	m_backChoseColor = false;
 	m_lTotalSize = 1.0;
 	multipleViews = false;
 	numViews = 1;
@@ -440,21 +446,19 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// clear screen and zbuffer
 
-	// draw just the axis
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	setProjection();
 	glMatrixMode(GL_MODELVIEW);
 
 	glPushMatrix();
+	glClearColor(m_backColorR, m_backColorG, m_backColorB, 0.0);
 //	draw_axis();
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
+			
 			// save the current matrix
-			glLoadIdentity();
-
-			// Show default view.
-
+			glLoadIdentity();			
 			// load the view matrix and draw it
 			if (m_bIsPerspective) {
 				glTranslatef(0.0, 0.0, -5.0);
@@ -463,7 +467,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 			glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
 
 			::glViewport(0+i*m_WindowWidth/numViewsCol, 0+j*m_WindowHeight/numViewsRows, 
-									m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);			
+									m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);
 			drawAllObjects();
 		}
 	}
@@ -1029,7 +1033,7 @@ void COpenGLView::Translate(int x, int y)
 		
 			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 			glLoadIdentity();
-			glTranslatef(x/transFactor, (y)*(m_nAxis == ID_AXIS_Y)/transFactor,-y*(m_nAxis == ID_AXIS_Z)/transFactor);
+			glTranslatef(x/transFactor, (y)/transFactor,0);
 			glMultMatrixf(matrix);
 		} else if (nSpace == ID_SPACE_OBJECT){
 			glTranslatef(x/transFactor, y*(m_nAxis == ID_AXIS_Y)/transFactor,-y*(m_nAxis == ID_AXIS_Z)/transFactor);
@@ -1100,11 +1104,20 @@ void COpenGLView::OnUpdateViewView4(CCmdUI* pCmdUI)
 
 void COpenGLView::OnViewMultipleviews()
 {
-
-	numViews = (numViews == 1)? 9 : 1;					// must be X^2
-	numViewsCol = sqrt(double(numViews));
-	numViewsRows = numViewsCol;
-	multipleViews = (!multipleViews);
+	multiViewsDialog dlg(numViews);
+	
+	if (dlg.DoModal() == IDOK) {
+		numViews =  dlg.getVal();
+		double root = sqrt(double (numViews));
+		if (root-int(root) == 0){ // check if input is x^2
+			numViewsRows = numViewsCol = root;
+		}else{
+			return;
+		}
+	}else{	// cancel pressed
+		return;
+	}
+	multipleViews = (numViews > 1);
 	if (!multipleViews){
 		for (int i=1 ; i< numViews ; i++){
 			for (int k=0 ; k<16 ; k++){
@@ -1222,21 +1235,26 @@ void COpenGLView::OnActionSetcolor()
 		m_lColorB =  GetBValue(color);
 		m_bChoseColor = true;
 	} else if ( result == IDCANCEL){
-		m_lColorR =  0;
-		m_lColorG =  0;
-		m_lColorB =  0;
-		m_bChoseColor = false;
+		return;
+	}
+}
+void COpenGLView::OnActionSetbackgroundcolor()
+{
+	CColorDialog colorDlg;
+	INT_PTR result = colorDlg.DoModal();
+
+	if ( result == IDOK){
+		COLORREF color;
+		color = colorDlg.GetColor();
+		m_backColorR =  GetRValue(color);
+		m_backColorG =  GetGValue(color);
+		m_backColorB =  GetBValue(color);
+		m_backChoseColor = true;
+	} else if ( result == IDCANCEL){
+		return;
 	}
 }
 
-
-
-/* THIS IS TODO LIST   */
-
-/**
- * 2 models
- * Match default sensitivity to object size
- */
 void COpenGLView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {	
 	float sensFactor = float(mouseSensitivity)/sensitivityDialog::SENS_DEFAULT;
@@ -1255,4 +1273,18 @@ void COpenGLView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		
 	}
 	CView::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+
+void COpenGLView::OnActionResetcolors()
+{
+	m_lColorR =  0.0;
+	m_lColorG =  0.0;
+	m_lColorB =  0.0;
+	m_bChoseColor = false;
+
+	m_backColorR =  0.0;
+	m_backColorG =  0.0;
+	m_backColorB =  0.0;
+	m_backChoseColor = false;
 }

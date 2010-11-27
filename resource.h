@@ -13,7 +13,10 @@
 #define IDD_MATERIAL_DLG                136
 #define IDD_DIALOG1                     139
 #define IDD_DIALOG2                     144
+#define IDD_SENS_DLG                    144
 #define IDD_DIALOG3                     147
+#define IDD_RATIO_DLG                   147
+#define IDD_MULTIVIEWS_DLG              149
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -78,13 +81,15 @@
 #define ID_VIEW_M                       32823
 #define ID_VIEW_BOUNDING_BOX            32824
 #define ID_ACTION_SETCOLOR              32825
+#define ID_ACTION_SETBACKGROUNDCOLOR    32826
+#define ID_ACTION_RESETCOLORS           32827
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        149
-#define _APS_NEXT_COMMAND_VALUE         32826
+#define _APS_NEXT_RESOURCE_VALUE        150
+#define _APS_NEXT_COMMAND_VALUE         32828
 #define _APS_NEXT_CONTROL_VALUE         1050
 #define _APS_NEXT_SYMED_VALUE           108
 #endif

@@ -258,6 +258,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\multiViewsDialog.cpp"
+				>
+			</File>
+			<File
 				RelativePath="OpenGL.cpp"
 				>
 				<FileConfiguration
@@ -406,6 +410,10 @@
 			</File>
 			<File
 				RelativePath=".\MaterialDlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\multiViewsDialog.h"
 				>
 			</File>
 			<File

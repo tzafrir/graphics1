@@ -96,12 +96,14 @@ BEGIN
     POPUP "A&ction"
     BEGIN
         MENUITEM "Reset View",                  ID_Menu
+        MENUITEM "Reset Colors",                ID_ACTION_RESETCOLORS
         MENUITEM SEPARATOR
         MENUITEM "&Rotate",                     ID_ACTION_ROTATE
         MENUITEM "&Translate",                  ID_ACTION_TRANSLATE
         MENUITEM "&Scale",                      ID_ACTION_SCALE
         MENUITEM SEPARATOR
-        MENUITEM "Set Color...",                ID_ACTION_SETCOLOR
+        MENUITEM "Set Object Color...",         ID_ACTION_SETCOLOR
+        MENUITEM "Set Background Color...",     ID_ACTION_SETBACKGROUNDCOLOR
     END
     POPUP "A&xis"
     BEGIN
@@ -243,24 +245,26 @@ BEGIN
     GROUPBOX        "Texture Mapping",IDC_STATIC,118,7,182,91
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 118, 45
+IDD_SENS_DLG DIALOGEX 0, 0, 144, 46
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
+CAPTION "Sensitivity Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,61,24,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,7,24,50,14
-    EDITTEXT        IDC_EDIT2,7,7,104,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,87,25,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,25,50,14
+    EDITTEXT        IDC_EDIT2,55,25,31,14,ES_CENTER | ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Please choose mouse sensitivity.\nValues are Integers from 1 to 100",IDC_STATIC,7,7,130,19
 END
 
-IDD_DIALOG3 DIALOGEX 0, 0, 126, 45
+IDD_RATIO_DLG DIALOGEX 0, 0, 144, 46
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
+CAPTION "Perspective Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,69,24,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,7,24,50,14
-    EDITTEXT        IDC_EDIT1,7,7,112,15,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,87,25,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,25,50,14
+    EDITTEXT        IDC_EDIT1,58,26,28,13,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "Please choose Perspective aspect ratio.\nValues are Doubles from 0.01 to 10",IDC_STATIC,7,7,130,19
 END
 
 
@@ -334,20 +338,20 @@ BEGIN
         BOTTOMMARGIN, 131
     END
 
-    IDD_DIALOG2, DIALOG
+    IDD_SENS_DLG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 111
+        RIGHTMARGIN, 137
         TOPMARGIN, 7
-        BOTTOMMARGIN, 38
+        BOTTOMMARGIN, 39
     END
 
-    IDD_DIALOG3, DIALOG
+    IDD_RATIO_DLG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 119
+        RIGHTMARGIN, 137
         TOPMARGIN, 7
-        BOTTOMMARGIN, 38
+        BOTTOMMARGIN, 39
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -390,7 +394,6 @@ END
 //
 
 IDR_HTML_SENSITIVITYDIALOG HTML                    "sensitivityDialog.htm"
-IDR_HTML_SENSITIVITYDIALOG1 HTML                    "res\\html_sen.htm"
 IDR_HTML_PERSPECTIVEDIALOG HTML                    "perspectiveDialog.htm"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -522,6 +525,54 @@ BEGIN
 END
 
 #endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.K.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MULTIVIEWS_DLG DIALOGEX 0, 0, 161, 61
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Multiple Views Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,104,40,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,40,50,14
+    LTEXT           "Please choose number of views.\nThis number must be an Integer's square\nValues are {1,4,9,16,25,36,49,64,,81,100}.",IDC_STATIC,7,8,147,27
+    EDITTEXT        IDC_EDIT1,67,41,28,13,ES_CENTER | ES_AUTOHSCROLL | ES_NUMBER
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_MULTIVIEWS_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 154
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 54
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.K.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
