@@ -108,6 +108,8 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_WM_KEYDOWN()
 	ON_COMMAND(ID_ACTION_SETBACKGROUNDCOLOR, &COpenGLView::OnActionSetbackgroundcolor)
 	ON_COMMAND(ID_ACTION_RESETCOLORS, &COpenGLView::OnActionResetcolors)
+	ON_COMMAND(ID_VIEW_MULTIPLEOBJECTS, &COpenGLView::OnViewMultipleobjects)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_MULTIPLEOBJECTS, &COpenGLView::OnUpdateViewMultipleobjects)
 END_MESSAGE_MAP()
 
 
@@ -162,7 +164,9 @@ COpenGLView::COpenGLView()
 	m_backChoseColor = false;
 	m_lTotalSize = 1.0;
 	multipleViews = false;
+	multipleObjects = false;
 	numViews = 1;
+	numObjects = 4;
 	numViewsRows = numViewsCol = sqrt(double(numViews));
 	activeView = 0;
 	for (int i=0 ; i<MAX_VIEWS ; i++){
@@ -452,23 +456,36 @@ void COpenGLView::OnDraw(CDC* pDC)
 	glMatrixMode(GL_MODELVIEW);
 
 	glPushMatrix();
-	glClearColor(m_backColorR, m_backColorG, m_backColorB, 0.0);
+	if (m_backChoseColor){
+		glClearColor(m_backColorR, m_backColorG, m_backColorB, 0.0);
+	}else{
+		glClearColor(0.0, 0.0, 0.0, 0.0);
+	}
 //	draw_axis();
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
-			
-			// save the current matrix
-			glLoadIdentity();			
-			// load the view matrix and draw it
-			if (m_bIsPerspective) {
-				glTranslatef(0.0, 0.0, -5.0);
+			for(int k=0 ; k<numObjects ; k++){
+				// save the current matrix
+				glLoadIdentity();			
+				// load the view matrix and draw it
+				if (m_bIsPerspective) {
+					glTranslatef(0.0, 0.0, -5.0);
+				}
+				if (multipleObjects){
+					glScalef(1.0/numObjects,1.0/numObjects,1.0/numObjects);
+				}
+				
+				if (multipleObjects){	// multiple objects
+					glMultMatrixf(viewMatrix[k]);
+					::glViewport(0, 0, m_WindowWidth, m_WindowHeight);
+				}else{					//multipleviews
+					glMultMatrixf(viewMatrix[numViewsRows*i+j]);
+					::glViewport(0+i*m_WindowWidth/numViewsCol, 0+j*m_WindowHeight/numViewsRows, 
+										m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);
+				}
+				glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
+				drawAllObjects();
 			}
-			glMultMatrixf(viewMatrix[numViewsRows*i+j]);
-			glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
-
-			::glViewport(0+i*m_WindowWidth/numViewsCol, 0+j*m_WindowHeight/numViewsRows, 
-									m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);
-			drawAllObjects();
 		}
 	}
 
@@ -700,6 +717,7 @@ void COpenGLView::OnMenu()
 	m_lZoomRatio = zoomRatioDefault;
 	m_lPerspectiveWidthRatio = 1.0;
 	m_bChoseColor = false;
+	m_backChoseColor = false;
 }
 
 void COpenGLView::OnActionRotate() 
@@ -981,19 +999,29 @@ void COpenGLView::Scale(float scale){
 	}
 	for (int i=0 ; i<numViews ; i++){
 		glPushMatrix();
-		glLoadMatrixf(viewMatrix[i]);
 		
-		if ((nSpace == ID_SPACE_SCREEN)&&(activeView == i)){
-			GLfloat matrix[16];
-					
-			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-			glLoadIdentity();
-			glScalef(scale , scale, scale);
-			glMultMatrixf(matrix);
-		}else if (nSpace == ID_SPACE_OBJECT){
-			glScalef(scale , scale, scale);
+		for (int k=0 ; k<numObjects ; k++){
+			if (multipleObjects){
+				glLoadMatrixf(viewMatrix[k]);
+			}else{
+				glLoadMatrixf(viewMatrix[i]);
+			}
+			if ((nSpace == ID_SPACE_SCREEN)&&(((activeView == i)&&(multipleViews))||(activeView == k))){
+				GLfloat matrix[16];
+						
+				glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+				glLoadIdentity();
+				glScalef(scale , scale, scale);
+				glMultMatrixf(matrix);
+			}else if (nSpace == ID_SPACE_OBJECT){
+				glScalef(scale , scale, scale);
+			}
+			if (multipleObjects){
+				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[k]);
+			}else{
+				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+			}
 		}
-		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
 		glPopMatrix();
 	}
 }
@@ -1003,20 +1031,28 @@ void COpenGLView::Rotate(float angle)
 {
 	for (int i=0 ; i<numViews ; i++){
 		glPushMatrix();
-		glLoadMatrixf(viewMatrix[i]);
-		
-		if ((nSpace == ID_SPACE_SCREEN)&&(activeView == i)){ // 
-			GLfloat matrix[16];
-					
-			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-			glLoadIdentity();
-			glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
-			glMultMatrixf(matrix);
-		}else if (nSpace == ID_SPACE_OBJECT){
-			glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+		for (int k=0 ; k<numObjects ; k++){
+			if (multipleObjects){
+				glLoadMatrixf(viewMatrix[k]);
+			}else{
+				glLoadMatrixf(viewMatrix[i]);
+			}
+			if ((nSpace == ID_SPACE_SCREEN)&&(((activeView == i)&&(multipleViews))||(activeView == k))){ // 
+				GLfloat matrix[16];
+						
+				glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+				glLoadIdentity();
+				glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+				glMultMatrixf(matrix);
+			}else if (nSpace == ID_SPACE_OBJECT){
+				glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+			}
+			if (multipleObjects){
+				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[k]);
+			}else{
+				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+			}
 		}
-
-		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
 		glPopMatrix();
 	}
 }
@@ -1027,18 +1063,29 @@ void COpenGLView::Translate(int x, int y)
 		const float transFactor = 165.0 / sqrt(float (numViews));
 
 		glPushMatrix();
-		glLoadMatrixf(viewMatrix[i]);
-		if ((nSpace == ID_SPACE_SCREEN)&&(activeView == i)) {
-			GLfloat matrix[16];
-		
-			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-			glLoadIdentity();
-			glTranslatef(x/transFactor, (y)/transFactor,0);
-			glMultMatrixf(matrix);
-		} else if (nSpace == ID_SPACE_OBJECT){
-			glTranslatef(x/transFactor, y*(m_nAxis == ID_AXIS_Y)/transFactor,-y*(m_nAxis == ID_AXIS_Z)/transFactor);
+		for (int k=0 ; k<numObjects ; k++){
+			if (multipleObjects){
+				glLoadMatrixf(viewMatrix[k]);
+			}else{
+				glLoadMatrixf(viewMatrix[i]);
+			}
+			if ((nSpace == ID_SPACE_SCREEN)&&(((activeView == i)&&(multipleViews))||(activeView == k))) {
+				GLfloat matrix[16];
+			
+				glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+				glLoadIdentity();
+				glTranslatef(x/transFactor, (y)/transFactor,0);
+				glMultMatrixf(matrix);
+			} else if (nSpace == ID_SPACE_OBJECT){
+				glTranslatef(x/transFactor, y*(m_nAxis == ID_AXIS_Y)/transFactor,-y*(m_nAxis == ID_AXIS_Z)/transFactor);
+			}
+			if (multipleObjects){
+				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[k]);
+			}else{
+				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+			}
 		}
-		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+		
 		glPopMatrix();
 	}
 }
@@ -1052,7 +1099,7 @@ void COpenGLView::OnMouseMove(UINT nFlags, CPoint point)
 		deltaY =  lastClicked.y - point.y;
 	}
 	
-	float sensFactor = float(mouseSensitivity)/sensitivityDialog::SENS_DEFAULT;
+	float sensFactor = float(mouseSensitivity)/sensitivityDialog::SENS_DEFAULT/numObjects;
 	switch (m_nAction){
 		case ID_ACTION_ROTATE	: Rotate(-sensFactor*deltaX);						break;
 		case ID_ACTION_TRANSLATE: Translate(-sensFactor*deltaX,sensFactor*deltaY);	break;
@@ -1081,6 +1128,7 @@ void COpenGLView::OnViewView2()
 void COpenGLView::OnUpdateViewView2(CCmdUI* pCmdUI) 
 {
 	pCmdUI->SetCheck(activeView == 1);
+	pCmdUI->Enable(multipleObjects);
 }
 
 void COpenGLView::OnViewView3()
@@ -1090,6 +1138,7 @@ void COpenGLView::OnViewView3()
 void COpenGLView::OnUpdateViewView3(CCmdUI* pCmdUI) 
 {
 	pCmdUI->SetCheck(activeView == 2);
+	pCmdUI->Enable(multipleObjects);
 }
 
 void COpenGLView::OnViewView4()
@@ -1100,6 +1149,7 @@ void COpenGLView::OnViewView4()
 void COpenGLView::OnUpdateViewView4(CCmdUI* pCmdUI) 
 {
 	pCmdUI->SetCheck(activeView == 3);
+	pCmdUI->Enable(multipleObjects);
 }
 
 void COpenGLView::OnViewMultipleviews()
@@ -1118,19 +1168,51 @@ void COpenGLView::OnViewMultipleviews()
 		return;
 	}
 	multipleViews = (numViews > 1);
-	if (!multipleViews){
+	if (!multipleViews){		// just turned off
 		for (int i=1 ; i< numViews ; i++){
 			for (int k=0 ; k<16 ; k++){
 				viewMatrix[i][k] = viewMatrix[0][k];
 			}
 		}
 		activeView = 0;
+	} else {
+		multipleObjects = false;
+		numObjects = 1;
 	}
 }
 
 void COpenGLView::OnUpdateViewMultipleviews(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(multipleViews == true);
+}
+
+void COpenGLView::OnViewMultipleobjects()
+{
+	multiViewsDialog dlg(numViews);
+	
+
+	multipleObjects = (!multipleObjects);
+	OnMenu();
+	if (multipleObjects){ //just turned on
+		numObjects = 4;
+		multipleViews = false;
+		for (int i=0 ; i<numObjects ; i++){
+			glPushMatrix();
+			glLoadMatrixf(viewMatrix[i]);
+			glTranslatef((i-numObjects/2+0.5)*2*m_lTotalSize,0.0,0.0);
+			
+			glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+			glPopMatrix();
+		}
+	}else{		//just turned off
+		multipleViews = false;
+		numViews = numObjects= 1;
+	}
+}
+
+void COpenGLView::OnUpdateViewMultipleobjects(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(multipleObjects == true);
 }
 void COpenGLView::drawAllObjects() {
 	if (!m_bMayDraw) {
@@ -1146,7 +1228,7 @@ void COpenGLView::drawAllObjects() {
 
 void COpenGLView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	if (multipleViews){	// find and set the active view
+	if ((multipleViews)&&(!multipleObjects)){	// find and set the active view
 		int i,j;
 		for (i=0 ; i< numViewsCol ; i++){
 			if (lastClicked.x < (i+1)*m_WindowWidth/numViewsCol){
@@ -1254,7 +1336,6 @@ void COpenGLView::OnActionSetbackgroundcolor()
 		return;
 	}
 }
-
 void COpenGLView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {	
 	float sensFactor = float(mouseSensitivity)/sensitivityDialog::SENS_DEFAULT;
@@ -1288,3 +1369,5 @@ void COpenGLView::OnActionResetcolors()
 	m_backColorB =  0.0;
 	m_backChoseColor = false;
 }
+
+

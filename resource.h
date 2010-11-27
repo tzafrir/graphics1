@@ -83,13 +83,15 @@
 #define ID_ACTION_SETCOLOR              32825
 #define ID_ACTION_SETBACKGROUNDCOLOR    32826
 #define ID_ACTION_RESETCOLORS           32827
+#define ID_VIEW_MULTIPLEOBJECTS         32828
+#define ID_VIEW_OBJECT2                 32829
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         32828
+#define _APS_NEXT_COMMAND_VALUE         32830
 #define _APS_NEXT_CONTROL_VALUE         1050
 #define _APS_NEXT_SYMED_VALUE           108
 #endif

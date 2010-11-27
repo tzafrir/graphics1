@@ -53,6 +53,7 @@ private:
 	int mouseSensitivity;			// hw1
 	bool m_bShowNormals;			// hw1: draw normals
 	bool multipleViews;				// hw1
+	bool multipleObjects;			// hw1
 	int activeView;					// hw1
 	double m_lNormalScale;			// hw1 $$: Larger -> larger normals
 	bool m_bDrawVertexNormals;		// hw1
@@ -62,6 +63,7 @@ private:
 	double m_lColorR;	// $$$$$
 	double m_lColorG;	// $ User chosen color
 	double m_lColorB;	// $$$$$
+	bool m_bChoseColor; // $^ Set this to true when user chooses a color
 	
 	double m_backColorR;	// $$$$$
 	double m_backColorG;	// $ User background chosen color
@@ -73,7 +75,6 @@ private:
 	double m_activeColorB;	// $$$$$
 	bool m_bIsActiveView;
 
-	bool m_bChoseColor; // $^ Set this to true when user chooses a color
 	double m_lTotalSize; // Diagonal of the box
 	double m_lZoomRatio; // Amount of zoom in perspective mode (managed by Scale() )
 	double m_lPerspectiveWidthRatio; //  How wide should the aspect ratio be in perspective mode
@@ -97,6 +98,7 @@ private:
 	int numViews;
 	int numViewsRows;
 	int numViewsCol;
+	int numObjects;
 	bool isActiveView(){
 		return m_bIsActiveView;
 	}
@@ -201,6 +203,8 @@ public:
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnActionSetbackgroundcolor();
 	afx_msg void OnActionResetcolors();
+	afx_msg void OnViewMultipleobjects();
+	afx_msg void OnUpdateViewMultipleobjects(CCmdUI *pCmdUI);
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

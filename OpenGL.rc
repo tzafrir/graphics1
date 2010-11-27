@@ -80,7 +80,9 @@ BEGIN
         MENUITEM "Polygons Normals",            ID_VIEW_POLYGONSNORMALS
         MENUITEM "Vertices Normals",            ID_VIEW_VERTICESNORMALS
         MENUITEM "Bounding Box",                ID_VIEW_BOUNDING_BOX
-        MENUITEM "Multiple Views",              ID_VIEW_MULTIPLEVIEWS
+        MENUITEM SEPARATOR
+        MENUITEM "Multiple Views...",           ID_VIEW_MULTIPLEVIEWS
+        MENUITEM "Multiple Objects",            ID_VIEW_MULTIPLEOBJECTS
         MENUITEM SEPARATOR
         MENUITEM "&Orthographic",               ID_VIEW_ORTHOGRAPHIC
         MENUITEM "&Perspective",                ID_VIEW_PERSPECTIVE
@@ -88,10 +90,10 @@ BEGIN
         MENUITEM "&Camera View",                ID_VIEW_CAMERAVIEW
         MENUITEM "&Model View",                 ID_VIEW_MODELVIEW
         MENUITEM SEPARATOR
-        MENUITEM "View 1",                      ID_VIEW_VIEW1
-        MENUITEM "View 2",                      ID_VIEW_VIEW2
-        MENUITEM "View 3",                      ID_VIEW_VIEW3
-        MENUITEM "View 4",                      ID_VIEW_VIEW4
+        MENUITEM "Object 1",                    ID_VIEW_VIEW1
+        MENUITEM "Object 2",                    ID_VIEW_VIEW2
+        MENUITEM "Object 3",                    ID_VIEW_VIEW3
+        MENUITEM "Object 4",                    ID_VIEW_VIEW4
     END
     POPUP "A&ction"
     BEGIN

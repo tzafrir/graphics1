@@ -8,7 +8,7 @@ class multiViewsDialog : public CDialog
 	DECLARE_DYNAMIC(multiViewsDialog)
 public:
 	static const int VIEWS_MIN = 0;
-	static const int VIEWS_MAX = 10;
+	static const int VIEWS_MAX = 100;
 
 public:
 	multiViewsDialog(int val = 1, CWnd* pParent = NULL);   // standard constructor
