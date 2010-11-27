@@ -14,6 +14,7 @@
 
 #include "Light.h"
 #include "HW1Dialog.h"	// sensitivity dialog
+#include "afxdlgs.h"
 
 class COpenGLView : public CView
 {
@@ -50,6 +51,7 @@ private:
 
 	CPoint lastClicked;				// hw1: 
 	int nSpace;						// hw1: object / view space
+	int mouseSensitivity;			// hw1
 	bool m_bShowNormals;			// hw1: draw normals
 	bool multipleViews;				// hw1
 	int activeView;					// hw1
@@ -61,10 +63,11 @@ private:
 	double m_lColorR;	// $$$$$
 	double m_lColorG;	// $ User chosen color
 	double m_lColorB;	// $$$$$
+	bool m_bIsActiveView;
 	bool m_bChoseColor; // $^ Set this to true when user chooses a color
 	double m_lTotalSize; // Diagonal of the box
 	double m_lZoomRatio; // Amount of zoom in perspective mode (managed by Scale() )
-	double m_lPerspectiveWidthRatio; // $$ How wide should the aspect ratio be in perspective mode
+	double m_lPerspectiveWidthRatio; //  How wide should the aspect ratio be in perspective mode
 	bool m_bMayDraw; // For internal use - lock for drawing
 	bool m_bDrawBoundingBox; // $$ Should draw bounding box around each object
 
@@ -85,7 +88,9 @@ private:
 	int numViews;
 	int numViewsRows;
 	int numViewsCol;
-
+	bool isActiveView(){
+		return m_bIsActiveView;
+	}
 	protected:
 	//}}AFX_VIRTUAL
 
@@ -179,6 +184,12 @@ public:
 	afx_msg void OnViewVerticesnormals();
 	afx_msg void OnUpdateViewVerticesnormals(CCmdUI *pCmdUI);
 	afx_msg void OnOptionsMousesensitivity();
+	afx_msg void OnOptionsPerspectivecontrol();
+	afx_msg void OnViewBoundingBox();
+	afx_msg void OnUpdateViewBoundingBox(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateViewMultipleviews(CCmdUI *pCmdUI);
+	afx_msg void OnActionSetcolor();
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

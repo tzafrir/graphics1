@@ -11,6 +11,7 @@ using std::cout;
 using std::endl;
 #include "MaterialDlg.h"
 #include "LightDialog.h"
+#include "sensitivityDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -31,6 +32,8 @@ static char THIS_FILE[] = __FILE__;
 #include <vector>
 using std::vector;
 #include "hw1parser.h"
+#include "sensitivityDialog.h"
+#include "perspectiveDialog.h"
 
 extern vector<Hw1Object*> hw1Objects;
 extern void clearHw1Objects();
@@ -96,6 +99,12 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_COMMAND(ID_VIEW_VERTICESNORMALS, &COpenGLView::OnViewVerticesnormals)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_VERTICESNORMALS, &COpenGLView::OnUpdateViewVerticesnormals)
 	ON_COMMAND(ID_OPTIONS_MOUSESENSITIVITY, &COpenGLView::OnOptionsMousesensitivity)
+	ON_COMMAND(ID_OPTIONS_PERSPECTIVECONTROL, &COpenGLView::OnOptionsPerspectivecontrol)
+	ON_COMMAND(ID_VIEW_BOUNDING_BOX, &COpenGLView::OnViewBoundingBox)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_BOUNDING_BOX, &COpenGLView::OnUpdateViewBoundingBox)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_MULTIPLEVIEWS, &COpenGLView::OnUpdateViewMultipleviews)
+	ON_COMMAND(ID_ACTION_SETCOLOR, &COpenGLView::OnActionSetcolor)
+	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 
@@ -133,12 +142,14 @@ COpenGLView::COpenGLView()
 	m_lights[LIGHT_ID_1].enabled=true;
 
 	m_lZoomRatio = zoomRatioDefault; // hw1 zoom ratio
-	m_lPerspectiveWidthRatio = 1.0;
+	m_lPerspectiveWidthRatio = perspectiveDialog::PERS_DEFAULT;
 	lastClicked.SetPoint(0,0);	//hw1
+	mouseSensitivity = sensitivityDialog::SENS_DEFAULT;
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
 	m_bMayDraw = false; // Wait until size and center of object is calculated
 	m_bDrawBoundingBox = false;
+	m_lNormalScale = 1.0;
 	nSpace = ID_SPACE_SCREEN;	//hw1
 	m_lCenterX = m_lCenterY = m_lCenterZ = 1.0;
 	m_lColorR = m_lColorG = m_lColorB = 1.0;
@@ -430,7 +441,6 @@ void COpenGLView::OnDraw(CDC* pDC)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// clear screen and zbuffer
 
 	// draw just the axis
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	setProjection();
@@ -453,12 +463,13 @@ void COpenGLView::OnDraw(CDC* pDC)
 			glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
 
 			::glViewport(0+i*m_WindowWidth/numViewsCol, 0+j*m_WindowHeight/numViewsRows, 
-									m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);
-			
+									m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);			
 			drawAllObjects();
 		}
 	}
+
 	glPopMatrix();
+	
 	RenderScene();
 
 
@@ -824,8 +835,7 @@ double Hw1Polygon::normalScale = 1.0;
 int Hw1Polygon::drawingMode = GL_POLYGON; // Set to GL_LINE_LOOP to get wireframe mode.
 double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
-void Hw1Object::draw(bool shouldDrawBoundingBox, bool hasColor, double cR, double cG,
-		double cB) {
+void Hw1Object::draw(bool shouldDrawBoundingBox, bool hasColor, double cR, double cG, double cB) {
 	if (hasColor) {
 		glColor3f(cR, cG, cB);
 	} else {
@@ -1010,6 +1020,8 @@ void COpenGLView::Rotate(float angle)
 void COpenGLView::Translate(int x, int y)
 {	
 	for (int i=0 ; i<numViews ; i++){
+		const float transFactor = 165.0 / sqrt(float (numViews));
+
 		glPushMatrix();
 		glLoadMatrixf(viewMatrix[i]);
 		if ((nSpace == ID_SPACE_SCREEN)&&(activeView == i)) {
@@ -1017,10 +1029,10 @@ void COpenGLView::Translate(int x, int y)
 		
 			glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 			glLoadIdentity();
-			glTranslatef(x/200.0, y/200.0,0);
+			glTranslatef(x/transFactor, (y)*(m_nAxis == ID_AXIS_Y)/transFactor,-y*(m_nAxis == ID_AXIS_Z)/transFactor);
 			glMultMatrixf(matrix);
 		} else if (nSpace == ID_SPACE_OBJECT){
-			glTranslatef(x/200.0, y/200.0,0);
+			glTranslatef(x/transFactor, y*(m_nAxis == ID_AXIS_Y)/transFactor,-y*(m_nAxis == ID_AXIS_Z)/transFactor);
 		}
 		glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
 		glPopMatrix();
@@ -1035,11 +1047,12 @@ void COpenGLView::OnMouseMove(UINT nFlags, CPoint point)
 		deltaX =  lastClicked.x - point.x;
 		deltaY =  lastClicked.y - point.y;
 	}
-
+	
+	float sensFactor = float(mouseSensitivity)/sensitivityDialog::SENS_DEFAULT;
 	switch (m_nAction){
-		case ID_ACTION_ROTATE	: Rotate(deltaX);				break;
-		case ID_ACTION_TRANSLATE: Translate(-deltaX, deltaY);	break;
-		case ID_ACTION_SCALE	: Scale(1+deltaY/100.0);		break;
+		case ID_ACTION_ROTATE	: Rotate(-sensFactor*deltaX);						break;
+		case ID_ACTION_TRANSLATE: Translate(-sensFactor*deltaX,sensFactor*deltaY);	break;
+		case ID_ACTION_SCALE	: Scale(1+sensFactor*deltaY/100.0);					break;
 	}
 	
 	Invalidate();
@@ -1087,7 +1100,8 @@ void COpenGLView::OnUpdateViewView4(CCmdUI* pCmdUI)
 
 void COpenGLView::OnViewMultipleviews()
 {
-	numViews = (numViews == 1)? 100 : 1;					// must be X^2
+
+	numViews = (numViews == 1)? 9 : 1;					// must be X^2
 	numViewsCol = sqrt(double(numViews));
 	numViewsRows = numViewsCol;
 	multipleViews = (!multipleViews);
@@ -1101,6 +1115,10 @@ void COpenGLView::OnViewMultipleviews()
 	}
 }
 
+void COpenGLView::OnUpdateViewMultipleviews(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(multipleViews == true);
+}
 void COpenGLView::drawAllObjects() {
 	if (!m_bMayDraw) {
 		return;
@@ -1161,23 +1179,80 @@ void COpenGLView::setProjection() {
 	}
 }
 
+void COpenGLView::OnOptionsMousesensitivity()
+{
+	sensitivityDialog dlg(mouseSensitivity);
+
+	if (dlg.DoModal() == IDOK) {
+		mouseSensitivity = dlg.getVal();
+		Invalidate();
+	}
+}
+
+void COpenGLView::OnOptionsPerspectivecontrol()
+{
+	perspectiveDialog dlg(m_lPerspectiveWidthRatio);
+
+	if (dlg.DoModal() == IDOK) {
+		m_lPerspectiveWidthRatio = dlg.getVal();
+		Invalidate();
+	}
+}
+
+void COpenGLView::OnViewBoundingBox()
+{
+	m_bDrawBoundingBox = (!m_bDrawBoundingBox);
+}
+
+void COpenGLView::OnUpdateViewBoundingBox(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bDrawBoundingBox == true);
+}
+
+void COpenGLView::OnActionSetcolor()
+{
+	CColorDialog colorDlg;
+	INT_PTR result = colorDlg.DoModal();
+
+	if ( result == IDOK){
+		COLORREF color;
+		color = colorDlg.GetColor();
+		m_lColorR =  GetRValue(color);
+		m_lColorG =  GetGValue(color);
+		m_lColorB =  GetBValue(color);
+		m_bChoseColor = true;
+	} else if ( result == IDCANCEL){
+		m_lColorR =  0;
+		m_lColorG =  0;
+		m_lColorB =  0;
+		m_bChoseColor = false;
+	}
+}
+
+
 
 /* THIS IS TODO LIST   */
 
 /**
- * Keyboard translation
  * 2 models
- * Color selection
- * Sensitivity
- * Scaling in perspective mode
  * Match default sensitivity to object size
- * Control the perspective matrix
  */
-void COpenGLView::OnOptionsMousesensitivity()
-{
-	HW1Dialog dlg(m_lNormalScale);
-	if (dlg.DoModal() == IDOK) {
-		m_lNormalScale = dlg.getVal();
-		Invalidate();
+void COpenGLView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{	
+	float sensFactor = float(mouseSensitivity)/sensitivityDialog::SENS_DEFAULT;
+	if (GetKeyState(VK_CONTROL) < 0){ // Ctrl is being pressed
+		switch(nChar){
+			case VK_LEFT: Rotate(-10*sensFactor); break;
+			case VK_RIGHT: Rotate(10*sensFactor); break;
+		} 
+	} else {
+		switch(nChar){
+			case VK_LEFT:	Translate(-100*sensFactor,0);	break;
+			case VK_RIGHT:	Translate(100*sensFactor,0);	break;
+			case VK_UP:		Translate(0,100*sensFactor);	break;
+			case VK_DOWN:	Translate(0,-100*sensFactor);	break;
 	}
+		
+	}
+	CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }

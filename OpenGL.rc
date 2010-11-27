@@ -79,6 +79,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Polygons Normals",            ID_VIEW_POLYGONSNORMALS
         MENUITEM "Vertices Normals",            ID_VIEW_VERTICESNORMALS
+        MENUITEM "Bounding Box",                ID_VIEW_BOUNDING_BOX
         MENUITEM "Multiple Views",              ID_VIEW_MULTIPLEVIEWS
         MENUITEM SEPARATOR
         MENUITEM "&Orthographic",               ID_VIEW_ORTHOGRAPHIC
@@ -99,6 +100,8 @@ BEGIN
         MENUITEM "&Rotate",                     ID_ACTION_ROTATE
         MENUITEM "&Translate",                  ID_ACTION_TRANSLATE
         MENUITEM "&Scale",                      ID_ACTION_SCALE
+        MENUITEM SEPARATOR
+        MENUITEM "Set Color...",                ID_ACTION_SETCOLOR
     END
     POPUP "A&xis"
     BEGIN
@@ -240,14 +243,24 @@ BEGIN
     GROUPBOX        "Texture Mapping",IDC_STATIC,118,7,182,91
 END
 
-IDD_DIALOG1 DIALOGEX 0, 0, 262, 84
+IDD_DIALOG2 DIALOGEX 0, 0, 118, 45
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,205,63,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,7,63,50,14
-    CONTROL         "",IDC_SCROLLBAR1,"{DFD181E0-5E2F-11CE-A449-00AA004A803D}",WS_TABSTOP,7,25,248,25
+    DEFPUSHBUTTON   "OK",IDOK,61,24,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,24,50,14
+    EDITTEXT        IDC_EDIT2,7,7,104,14,ES_AUTOHSCROLL
+END
+
+IDD_DIALOG3 DIALOGEX 0, 0, 126, 45
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,69,24,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,24,50,14
+    EDITTEXT        IDC_EDIT1,7,7,112,15,ES_AUTOHSCROLL
 END
 
 
@@ -321,12 +334,20 @@ BEGIN
         BOTTOMMARGIN, 131
     END
 
-    IDD_DIALOG1, DIALOG
+    IDD_DIALOG2, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 255
+        RIGHTMARGIN, 111
         TOPMARGIN, 7
-        BOTTOMMARGIN, 77
+        BOTTOMMARGIN, 38
+    END
+
+    IDD_DIALOG3, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 119
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 38
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -354,7 +375,7 @@ END
 
 IDD_DIALOG1 DLGINIT
 BEGIN
-    IDC_SCROLLBAR1, 0x37a, 55, 0
+    IDC_MATERIAL_DIFFUSE, 0x37a, 55, 0
 0x0000, 0x0000, 0x0023, 0x0000, 0x0001, 0x0000, 0x001b, 0x0000, 0x0001, 
 0x8001, 0x0000, 0x0000, 0x0000, 0x0003, 0x0000, 0x0002, 0x8001, 0x0001, 
 0x0000, 0x0000, 0x0c02, 0x0800, 0x0000, 0x7300, 0x0026, 0x3d00, 0x0004, 
@@ -368,7 +389,9 @@ END
 // HTML
 //
 
-IDR_HTML_SENSDIAG       HTML                    "sensDiag.htm"
+IDR_HTML_SENSITIVITYDIALOG HTML                    "sensitivityDialog.htm"
+IDR_HTML_SENSITIVITYDIALOG1 HTML                    "res\\html_sen.htm"
+IDR_HTML_PERSPECTIVEDIALOG HTML                    "perspectiveDialog.htm"
 
 /////////////////////////////////////////////////////////////////////////////
 //
