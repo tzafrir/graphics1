@@ -7,9 +7,7 @@ class perspectiveDialog : public CDialog
 {
 	DECLARE_DYNCREATE(perspectiveDialog)
 public:
-	/*PERS_DEFAULT = 1.0;
-	PERS_MAX =10.0;
-	PERS_MIN =0.01;*/
+
 	static const int PERS_MIN = 0;
 	static const int PERS_MAX = 10;
 	static const int PERS_DEFAULT = 1;
