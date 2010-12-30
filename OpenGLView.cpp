@@ -12,6 +12,7 @@ using std::endl;
 #include "MaterialDlg.h"
 #include "LightDialog.h"
 #include "sensitivityDialog.h"
+#include "fogDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -112,6 +113,9 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_MULTIPLEOBJECTS, &COpenGLView::OnUpdateViewMultipleobjects)
 	ON_COMMAND(ID_VIEW_WIREFRAME, &COpenGLView::OnViewWireframe)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_WIREFRAME, &COpenGLView::OnUpdateViewWireframe)
+	ON_COMMAND(ID_VIEW_ENABLEFOG, &COpenGLView::OnViewEnablefog)
+	ON_COMMAND(ID_VIEW_SETFOGPARAMETERS, &COpenGLView::OnViewSetfogparameters)
+	ON_COMMAND(ID_MATERIAL_SETMATERIALPARAMETERS, &COpenGLView::OnMaterialSetmaterialparameters)
 END_MESSAGE_MAP()
 
 
@@ -153,6 +157,17 @@ COpenGLView::COpenGLView()
 		m_lPerspectiveTop = m_lPerspectiveBottom = perspectiveDialog::PERS_DEFAULT;
 	lastClicked.SetPoint(0,0);	//hw1
 	mouseSensitivity = sensitivityDialog::SENS_DEFAULT;
+	// FOG PARAMETERS
+	m_fogEnabled = false;
+	density = fogDialog::DENSITY_DEF;
+	fogColor[0] = fogDialog::FOG_COLOR_R_DEF;
+	fogColor[1] = fogDialog::FOG_COLOR_G_DEF;
+	fogColor[2] = fogDialog::FOG_COLOR_B_DEF;
+	fogColor[3] = fogDialog::FOG_COLOR_A_DEF;
+	fogStart = fogDialog::FOG_START_DEF;
+	fogEnd = fogDialog::FOG_END_DEF;
+	fogMode = fogDialog::FOG_MODE_DEF;
+			// FOG PARAMETERS END
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
 	m_bMayDraw = false; // Wait until size and center of object is calculated
@@ -411,7 +426,7 @@ BOOL COpenGLView::SetupViewingFrustum(void)
 // increasing the corresponding size of the ortho cube.
 BOOL COpenGLView::SetupViewingOrthoConstAspect(void)
 {
-	double windowSize = 4;	// the size of the window in GL coord system.
+	double windowSize = 4.0;	// the size of the window in GL coord system.
 
 
 	if ( m_AspectRatio > 1 ) {	// x is bigger than y.
@@ -436,7 +451,40 @@ BOOL COpenGLView::SetupViewingOrthoConstAspect(void)
 	return TRUE;
 }
 
-
+void COpenGLView::EnableFog (void) {
+	glEnable (GL_DEPTH_TEST); //enable the depth testing
+	int t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+	glEnable (GL_FOG); //enable the fog
+	t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+	glFogf (GL_FOG_START,fogStart);
+	t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+	glFogf (GL_FOG_END,fogEnd);
+	t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+	glFogi (GL_FOG_MODE, GL_EXP); //set the fog mode to GL_EXP2
+	t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+	glFogfv (GL_FOG_COLOR, fogColor); //set the fog color to our color chosen above
+	t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+	glFogf (GL_FOG_DENSITY, density/100); //set the density to the value above
+	t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+	glHint (GL_FOG_HINT, fogMode); // set the fog to look the	nicest, may slow down on older cards
+	t = ::glGetError();
+	if ( GL_NO_ERROR !=  t)
+		;
+}
 
 
 
@@ -473,11 +521,13 @@ void COpenGLView::OnDraw(CDC* pDC)
 	}else{
 		glClearColor(0.0, 0.0, 0.0, 0.0);
 	}
-	draw_axis();
+	if (m_fogEnabled)
+			EnableFog();
+	//draw_axis();
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
 			for(int k=0 ; k<numObjects ; k++){
-				glLoadIdentity();			
+				glLoadIdentity();	
 				// load the view matrix and draw it
 				if (m_bIsPerspective) {
 					glTranslatef(0.0, 0.0, -m_lPerspectiveDVal*m_lTotalSize);	//test
@@ -485,6 +535,8 @@ void COpenGLView::OnDraw(CDC* pDC)
 				if (multipleObjects){
 					float scale = sqrt(m_lTotalSize)/2/numObjects;
 					glScalef(scale, scale, scale);
+					float trans = (k-numObjects/2+0.5)*0.5*m_lTotalSize;
+					glTranslatef(trans, trans, trans);
 				}
 				
 				if (multipleObjects){	// multiple objects
@@ -1087,8 +1139,14 @@ void COpenGLView::Rotate(float angle)
 void COpenGLView::Translate(int x, int y)
 {	
 	for (int i=0 ; i<numViews ; i++){
-		const float transFactorX = 4.0*m_AspectRatio/m_WindowWidth; // sqrt(float (numViews));
-		const float transFactorY = 4.0/m_WindowHeight; // sqrt(float (numViews));
+		float size;
+		if(m_bIsPerspective){
+			size = 3.666;
+		}else{
+			size = 4.0;
+		}
+		const float transFactorX = size*m_AspectRatio/m_WindowWidth; // sqrt(float (numViews));
+		const float transFactorY = size/m_WindowHeight; // sqrt(float (numViews));
 
 		glPushMatrix();
 		for (int k=0 ; k<numObjects ; k++){
@@ -1235,7 +1293,7 @@ void COpenGLView::OnViewMultipleobjects()
 		for (int i=0 ; i<numObjects ; i++){
 			glPushMatrix();
 			glLoadMatrixf(viewMatrix[i]);
-			glTranslatef((i-numObjects/2+0.5)*0.5*m_lTotalSize,0.0,0.0);
+			// TEST
 			glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
 			glPopMatrix();
 		}
@@ -1436,4 +1494,32 @@ void COpenGLView::OnActionResetcolors()
 void COpenGLView::OnUpdateViewWireframe(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(Hw1Polygon::drawingMode == GL_LINE_LOOP);
+}
+
+void COpenGLView::OnViewEnablefog()
+{
+	m_fogEnabled = (!m_fogEnabled);
+}
+
+void COpenGLView::OnViewSetfogparameters()
+{
+	fogDialog dlg(	density, fogColor[0], fogColor[1] ,fogColor[2] , fogColor[3] ,
+					fogStart , fogEnd , fogMode);
+
+	if (dlg.DoModal() == IDOK) {
+		density = dlg.getDensity();
+		fogColor[0] = dlg.getRed();
+		fogColor[1] = dlg.getGreen();
+		fogColor[2] = dlg.getBlue();
+		fogColor[3] = dlg.getAlfa();
+		fogStart = dlg.getStart();
+		fogEnd = dlg.getEnd();
+		fogMode = dlg.getMode();
+		Invalidate();
+	}
+}
+
+void COpenGLView::OnMaterialSetmaterialparameters()
+{
+	// TODO: Add your command handler code here
 }

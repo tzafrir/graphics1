@@ -82,6 +82,9 @@ BEGIN
         MENUITEM "Bounding Box",                ID_VIEW_BOUNDING_BOX
         MENUITEM "Wireframe",                   ID_VIEW_WIREFRAME
         MENUITEM SEPARATOR
+        MENUITEM "Enable Fog",                  ID_VIEW_ENABLEFOG
+        MENUITEM "Set Fog Parameters...",       ID_VIEW_SETFOGPARAMETERS
+        MENUITEM SEPARATOR
         MENUITEM "Multiple Views...",           ID_VIEW_MULTIPLEVIEWS
         MENUITEM "Multiple Objects",            ID_VIEW_MULTIPLEOBJECTS
         MENUITEM SEPARATOR
@@ -131,6 +134,10 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "&About OpenGL...",            ID_APP_ABOUT
+    END
+    POPUP "Material"
+    BEGIN
+        MENUITEM "Set Material Parameters...",  ID_MATERIAL_SETMATERIALPARAMETERS
     END
 END
 
@@ -275,6 +282,22 @@ BEGIN
     EDITTEXT        IDC_EDIT_T,57,33,28,13,ES_CENTER | ES_AUTOHSCROLL
 END
 
+IDD_FOG_DLG DIALOGEX 0, 0, 316, 185
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,205,164,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,259,164,50,14
+    LTEXT           "Density [1...100]",IDC_STATIC,7,25,66,12
+    LTEXT           "Start distance",IDC_STATIC,7,53,48,12
+    LTEXT           "End distance",IDC_STATIC,89,53,43,12
+    CONTROL         "",IDC_SLIDER_DENS,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,65,22,178,14
+    CONTROL         "",IDC_SLIDER2,"msctls_trackbar32",TBS_BOTH | TBS_TOOLTIPS | WS_TABSTOP,69,127,159,16
+    EDITTEXT        IDC_EDIT_START,56,52,26,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_END,131,52,26,13,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -360,6 +383,14 @@ BEGIN
         RIGHTMARGIN, 134
         TOPMARGIN, 7
         BOTTOMMARGIN, 123
+    END
+
+    IDD_FOG_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
     END
 END
 #endif    // APSTUDIO_INVOKED

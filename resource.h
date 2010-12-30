@@ -17,6 +17,7 @@
 #define IDD_DIALOG3                     147
 #define IDD_RATIO_DLG                   147
 #define IDD_MULTIVIEWS_DLG              149
+#define IDD_FOG_DLG                     150
 #define IDC_LIGHT_SPACE                 1010
 #define IDC_RADIO_LIGHT1                1017
 #define IDC_RADIO_LIGHT2                1018
@@ -47,10 +48,13 @@
 #define IDC_MATERIAL_SPECULAR           1042
 #define IDC_EDIT2                       1047
 #define IDC_EDIT1                       1049
+#define IDC_EDIT_END                    1050
 #define IDC_EDIT_L                      1052
+#define IDC_SLIDER_DENS                 1053
+#define IDC_SLIDER2                     1054
+#define IDC_EDIT_START                  1055
 #define IDC_EDIT_R                      1057
 #define IDC_EDIT_D                      1058
-#define IDC_EDIT_L2                     1059
 #define IDC_EDIT_B                      1059
 #define IDC_EDIT_T                      1060
 #define ID_FILE_LOAD                    32771
@@ -93,14 +97,18 @@
 #define ID_VIEW_OBJECT2                 32829
 #define ID_Menu32830                    32830
 #define ID_VIEW_WIREFRAME               32831
+#define ID_FOG_SETPARAMETERS            32832
+#define ID_VIEW_ENABLEFOG               32833
+#define ID_VIEW_SETFOGPARAMETERS        32834
+#define ID_MATERIAL_SETMATERIALPARAMETERS 32835
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         32832
-#define _APS_NEXT_CONTROL_VALUE         1053
+#define _APS_NEXT_RESOURCE_VALUE        151
+#define _APS_NEXT_COMMAND_VALUE         32836
+#define _APS_NEXT_CONTROL_VALUE         1056
 #define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif

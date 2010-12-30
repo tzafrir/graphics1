@@ -85,6 +85,13 @@ private:
 	double m_lPerspectiveBottom;
 	double m_lPerspectiveDVal;
 
+	bool m_fogEnabled ;
+	GLfloat density;// = 0.3; //set the density to 0.3 which is acctually quite thick
+	GLfloat fogColor[4];// = {0.5, 0.5, 0.5, 1.0};
+	GLfloat fogStart;
+	GLfloat fogEnd;
+	int fogMode;
+
 	bool m_bMayDraw; // For internal use - lock for drawing
 	bool m_bDrawBoundingBox; // $$ Should draw bounding box around each object
 
@@ -127,6 +134,7 @@ protected:
 	BOOL SetupPixelFormat(PIXELFORMATDESCRIPTOR* pPFD = 0); // the '= 0' was added.
 	BOOL SetupViewingFrustum(void);
 	BOOL SetupViewingOrthoConstAspect(void);
+	void COpenGLView::EnableFog (void);
 
 	virtual void RenderScene();
 
@@ -217,6 +225,9 @@ public:
 	afx_msg void OnUpdateViewMultipleobjects(CCmdUI *pCmdUI);
 	afx_msg void OnViewWireframe();
 	afx_msg void OnUpdateViewWireframe(CCmdUI *pCmdUI);
+	afx_msg void OnViewEnablefog();
+	afx_msg void OnViewSetfogparameters();
+	afx_msg void OnMaterialSetmaterialparameters();
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()
