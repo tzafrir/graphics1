@@ -24,8 +24,8 @@ public:
     double m_ambient;
     // Diffuse property of the material
     double m_diffuse;
-    // shininess property of the material
-    double m_shininess;
-    // specular property of the material (integer values only)
-    int m_specular;
+    // shininess property of the material (integer values only)
+    int m_shininess;
+    // specular property of the material
+    double m_specular;
 };

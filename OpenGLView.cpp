@@ -143,7 +143,7 @@ COpenGLView::COpenGLView()
 	m_lMaterialAmbient = 0.2;
 	m_lMaterialDiffuse = 0.8;
 	m_lMaterialSpecular = 1.0;
-	m_nMaterialCosineFactor = 32;
+	m_nMaterialShininessFactor = 32;
 
 	//init the first light to be enabled
 	m_lights[LIGHT_ID_1].enabled=true;
@@ -466,14 +466,14 @@ void COpenGLView::OnDraw(CDC* pDC)
 	glLoadIdentity();
 	setProjection();
 	glMatrixMode(GL_MODELVIEW);
-
+	setupLighting(true);
 	glPushMatrix();
 	if (m_backChoseColor){
 		glClearColor(m_backColorR/255, m_backColorG/255, m_backColorB/255, 0.0);
 	}else{
 		glClearColor(0.0, 0.0, 0.0, 0.0);
 	}
-	draw_axis();
+	// draw_axis();
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
 			for(int k=0 ; k<numObjects ; k++){
@@ -499,7 +499,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 				float scale = 3.0/m_lTotalSize;
 				glScalef(scale, scale, scale);
 				glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
-				
+				setupLighting(false);
 				drawAllObjects();
 			}
 		}
@@ -945,6 +945,9 @@ void Hw1Polygon::draw() {
 			it != vertices->end();
 			++it) {
 		Hw1Vertex* v = *it;
+		Hw1Normal n = v->getNormal();
+		n.normalize();
+		glNormal3f(n.x, n.y, n.z);
 		glVertex3f(v->getX(), v->getY(), v->getZ());
 	}
 	glEnd();
@@ -1436,4 +1439,105 @@ void COpenGLView::OnActionResetcolors()
 void COpenGLView::OnUpdateViewWireframe(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(Hw1Polygon::drawingMode == GL_LINE_LOOP);
+}
+
+inline double _d256(int color) {
+	return (double)color / 255.0;
+}
+
+void COpenGLView::setupLighting(bool firstCall) {
+	// Fullscene ambient
+	{
+	LightParams &l = m_ambientLight;
+	GLfloat fs_ambient[] = { _d256(l.colorR), _d256(l.colorG), _d256(l.colorB), 1.0 };
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, fs_ambient);
+	}
+
+   static const double cutoff = 60.0;
+   static const double exponent = 2.0;
+   GLfloat spotDirection0[] = { -1.0, 0.0, -3.0, 1.0};
+   GLfloat spotDirection1[] = { 1.0, 0.0, -3.0, 1.0};
+   GLfloat spotDirection2[] = { 0.0, 1.0, -5.0, 1.0};
+
+	glEnable(GL_LIGHTING);
+	int _l[] = { GL_LIGHT0,
+		             GL_LIGHT1,
+		             GL_LIGHT2,
+		             GL_LIGHT3,
+		             GL_LIGHT4,
+		             GL_LIGHT5,
+		             GL_LIGHT6,
+					 GL_LIGHT7 };
+
+	for (int i = 0; i < 8; i++) {
+		LightParams &lp = m_lights[i];
+		if (!lp.enabled) continue;
+		int lightId = _l[i];
+		glEnable(lightId);
+
+		// Control object space / screen space lighting per light by calling
+		// this method twice.
+		if (firstCall && lp.space == LIGHT_SPACE_LOCAL) continue;
+		if (!firstCall && lp.space == LIGHT_SPACE_VIEW) continue;
+
+		// Position + Directional / Point
+		GLfloat w = (lp.type == LIGHT_TYPE_DIRECTIONAL) ? 0.0 : 1.0;
+		GLfloat pos[] = { lp.posX, lp.posY, lp.posZ, w };
+		glLightfv(lightId, GL_POSITION, pos);
+
+		// Colors
+		GLfloat rgba[] = {_d256(lp.colorR), _d256(lp.colorG), _d256(lp.colorB), 1.0 };
+		glLightfv(lightId, GL_DIFFUSE, rgba);
+		glLightfv(lightId, GL_SPECULAR, rgba);
+
+		if (lp.type == LIGHT_TYPE_SPOT) {
+			GLfloat direction[] = { lp.dirX, lp.dirY, lp.dirZ };
+			glLightf(lightId, GL_SPOT_CUTOFF, cutoff);
+			glLightfv(lightId, GL_SPOT_DIRECTION, direction);
+			glLightf(lightId, GL_SPOT_EXPONENT, exponent);
+		}
+	}
+	GLfloat specular[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat shininess = 40.0;
+   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shininess);
+   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+   /*
+  
+
+   glLightfv(GL_LIGHT0, GL_POSITION, position0);
+   glLightfv(GL_LIGHT1, GL_POSITION, position1);
+   glLightfv(GL_LIGHT2, GL_POSITION, position2);
+   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+   glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+   glLightfv(GL_LIGHT2, GL_AMBIENT, ambient);
+   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
+   glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse1);
+   glLightfv(GL_LIGHT2, GL_DIFFUSE, diffuse2);
+   glLightfv(GL_LIGHT0, GL_SPECULAR, diffuse0);
+   glLightfv(GL_LIGHT1, GL_SPECULAR, diffuse1);
+   glLightfv(GL_LIGHT2, GL_SPECULAR, diffuse2);
+   glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, spotDirection0);
+   glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spotDirection1);
+   glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, spotDirection2);
+   glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, cutoff);
+   glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, cutoff);
+   glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, cutoff);
+   glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, exponent);
+   glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, exponent);
+   glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, exponent);
+
+   glEnable(GL_LIGHT0);
+   glEnable(GL_LIGHT1);
+   glEnable(GL_LIGHT2);
+*/
+
+   if (m_nLightShading == ID_LIGHT_SHADING_FLAT) {
+	 glShadeModel (GL_FLAT);
+   } else {
+	 glShadeModel (GL_SMOOTH);
+   }
+
+	// END LIGHTING
 }

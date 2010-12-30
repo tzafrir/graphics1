@@ -41,7 +41,7 @@ private:
 	double m_lMaterialAmbient;		// The Ambient in the scene
 	double m_lMaterialDiffuse;		// The Diffuse in the scene
 	double m_lMaterialSpecular;		// The Specular in the scene
-	int m_nMaterialCosineFactor;		// The cosine factor for the specular
+	int m_nMaterialShininessFactor;		// The cosine factor for the specular
 
 	LightParams m_lights[MAX_LIGHT];	//configurable lights array
 	LightParams m_ambientLight;		//ambient light (only RGB is used)
@@ -90,6 +90,7 @@ private:
 
 	void drawAllObjects(); // hw1
 	void setProjection();
+	void setupLighting(bool firstCall);
 
 
 // Overrides

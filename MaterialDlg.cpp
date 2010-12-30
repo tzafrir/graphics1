@@ -32,7 +32,7 @@ void CMaterialDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_MATERIAL_DIFFUSE, m_diffuse);
     DDV_MinMaxDouble(pDX, m_diffuse, 0, 1);
     DDX_Text(pDX, IDC_MATERIAL_SHININESS, m_shininess);
-    DDV_MinMaxDouble(pDX, m_shininess, 0, 1);
+    DDV_MinMaxDouble(pDX, m_shininess, 0, 128);
     DDX_Text(pDX, IDC_MATERIAL_SPECULAR, m_specular);
 }
 
