@@ -198,6 +198,13 @@ COpenGLView::COpenGLView()
 			viewMatrix[i][k] = (k%5 == 0);
 		}
 	}
+
+	LightParams &dl = m_lights[0];
+	dl.posX = dl.posY = dl.posZ = 3.0;
+	dl.type = LIGHT_TYPE_POINT;
+
+	m_nLightShading = ID_LIGHT_SHADING_GOURAUD;
+
 }
 
 COpenGLView::~COpenGLView()
@@ -660,7 +667,6 @@ void COpenGLView::OnFileLoad()
 
 	if (dlg.DoModal () == IDOK) {
 		m_strItdFileName = dlg.GetPathName();		// Full path and filename
-		PngWrapper p;
 		
 		m_bMayDraw = false;
 		CGSkelProcessIritDataFiles(m_strItdFileName, 1);
@@ -674,23 +680,24 @@ void COpenGLView::OnFileLoad()
 		for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 				it != hw1Objects.end();
 				++it) {
-				Hw1Object* o = *it;
-				if (!setMinMax) {
-					minX = o->getMinX();
-					maxX = o->getMaxX();
-					minY = o->getMinY();
-					maxY = o->getMaxY();
-					minZ = o->getMinZ();
-					maxZ = o->getMaxZ();
-					setMinMax = true;
-				} else {
-					minX = min(minX, o->getMinX());
-					minY = min(minY, o->getMinY());
-					minZ = min(minZ, o->getMinZ());
-					maxX = max(maxX, o->getMaxX());
-					maxY = max(maxY, o->getMaxY());
-					maxZ = max(maxZ, o->getMaxZ());
-				}
+			Hw1Object* o = *it;
+			if (o->hasTex) loadTexture(o->png);
+			if (!setMinMax) {
+				minX = o->getMinX();
+				maxX = o->getMaxX();
+				minY = o->getMinY();
+				maxY = o->getMaxY();
+				minZ = o->getMinZ();
+				maxZ = o->getMaxZ();
+				setMinMax = true;
+			} else {
+				minX = min(minX, o->getMinX());
+				minY = min(minY, o->getMinY());
+				minZ = min(minZ, o->getMinZ());
+				maxX = max(maxX, o->getMaxX());
+				maxY = max(maxY, o->getMaxY());
+				maxZ = max(maxZ, o->getMaxZ());
+			}
 		}
 		m_lCenterX = (minX + maxX) / 2.0;
 		m_lCenterY = (minY + maxY) / 2.0;
@@ -1001,6 +1008,9 @@ void Hw1Polygon::draw() {
 		Hw1Normal n = v->getNormal();
 		n.normalize();
 		glNormal3f(n.x, n.y, n.z);
+		if (v->hasUV) {
+			glTexCoord2f(v->u, v->v);
+		}
 		glVertex3f(v->getX(), v->getY(), v->getZ());
 	}
 	glEnd();
@@ -1509,6 +1519,14 @@ void COpenGLView::setupLighting(bool firstCall) {
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, fs_ambient);
 	}
 
+	// Material properties
+	{
+	GLfloat specular[] = { m_lMaterialSpecular, m_lMaterialSpecular, m_lMaterialSpecular, 1.0 };
+	GLfloat shininess[] = { m_nMaterialShininessFactor };
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+	}
+
    static const double cutoff = 60.0;
    static const double exponent = 2.0;
    GLfloat spotDirection0[] = { -1.0, 0.0, -3.0, 1.0};
@@ -1553,12 +1571,10 @@ void COpenGLView::setupLighting(bool firstCall) {
 			glLightf(lightId, GL_SPOT_EXPONENT, exponent);
 		}
 	}
-	GLfloat specular[] = { 1.0, 1.0, 1.0, 1.0 };
-	GLfloat shininess = 40.0;
-   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shininess);
+	{
    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+	}
    /*
   
 
@@ -1623,6 +1639,48 @@ void COpenGLView::OnViewSetfogparameters()
 
 void COpenGLView::OnMaterialSetmaterialparameters()
 {
-	// TODO: Add your command handler code here
+	CMaterialDlg dlg;
+	if (dlg.DoModal() == IDOK) {
+		m_lMaterialAmbient = dlg.m_ambient;
+		m_nMaterialShininessFactor = dlg.m_shininess;
+		m_lMaterialDiffuse = dlg.m_diffuse;
+		m_lMaterialSpecular = dlg.m_specular;
+		Invalidate();
+	}
 }
 
+void COpenGLView::loadTexture(string png) {
+	PngWrapper p(png.c_str());
+	int w = p.GetWidth();
+	int h = p.GetHeight();
+	int c = p.GetNumChannels();
+	u_char* bmp = new u_char[w*h*c];
+	for (int _h = 0; _h < h; h++) {
+		for (int _w = 0; _w < w; w++) {
+			int pixel = p.GetValue(_w, _h);
+			if (1 == c) {
+				bmp[_w*_h + _w + 0] = pixel;
+				bmp[_w*_h + _w + 1] = pixel;
+				bmp[_w*_h + _w + 2] = pixel;
+				continue;
+			}
+			bmp[_w*_h + _w + 0] = GET_R(pixel);
+			bmp[_w*_h + _w + 1] = GET_R(pixel);
+			bmp[_w*_h + _w + 2] = GET_R(pixel);
+			if (4 == c) {
+				bmp[_w*_h + _w + 3] = GET_A(pixel);
+			}
+		}
+	}
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	GLenum format = (c == 4) ? GL_RGBA : GL_RGB;
+	glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, format, GL_UNSIGNED_BYTE, bmp);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glEnable(GL_TEXTURE_2D);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	delete bmp;
+
+}

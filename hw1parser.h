@@ -2,8 +2,10 @@
 #define HW1_PARSER_H
 
 #include <vector>
+#include <string>
 
 using std::vector;
+using std::string;
 
 struct Hw1Normal {
 	double x;
@@ -26,6 +28,7 @@ class Hw1Vertex {
 	double x;
 	double y;
 	double z;
+
 	Hw1Normal normal;
 	bool hasNormal_;
 
@@ -36,9 +39,9 @@ class Hw1Vertex {
 	Hw1Vertex& operator=(const Hw1Vertex& v) {}
 public:
 	Hw1Vertex(double x, double y, double z) : x(x), y(y), z(z),
-		normal(18.18, 18.18, 18.18), hasNormal_(false) {}
+		normal(18.18, 18.18, 18.18), hasNormal_(false), hasUV(false) {}
 	Hw1Vertex(double x, double y, double z, double normalX, double normalY, double normalZ) :
-	    x(x), y(y), z(z), normal(normalX, normalY, normalZ), hasNormal_(true) {}
+	    x(x), y(y), z(z), normal(normalX, normalY, normalZ), hasNormal_(true), hasUV(false) {}
 	double getX() {
 		return x;
 	}
@@ -57,6 +60,10 @@ public:
 	Hw1Normal getNormal() {
 		return normal;
 	}
+public:
+	double u;
+	double v;
+	bool hasUV;
 };
 
 class Hw1Polygon {
@@ -163,6 +170,9 @@ class Hw1Object {
 	Hw1Object(const Hw1Object& obj) {}
 	Hw1Object& operator=(const Hw1Object& obj) {}
 public:
+	int name;
+	bool hasTex;
+	string png;
 	~Hw1Object() {
 	  for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 	       it != polygons->end();
@@ -175,12 +185,12 @@ public:
 		double maxX, double maxY, double maxZ) : polygons(polygons),
 	// Default color: white?
 		colorR(1.0), colorG(1.0), colorB(1.0), minX(minX), minY(minY), minZ(minZ),
-		maxX(maxX), maxY(maxY), maxZ(maxZ) {}
+		maxX(maxX), maxY(maxY), maxZ(maxZ), hasTex(false), png("") {}
 	Hw1Object(vector<Hw1Polygon*>* polygons, double colorR, double colorG, double colorB,
 		double minX, double minY, double minZ,
 		double maxX, double maxY, double maxZ) :
 		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB), minX(minX), minY(minY), minZ(minZ),
-		maxX(maxX), maxY(maxY), maxZ(maxZ) {}
+		maxX(maxX), maxY(maxY), maxZ(maxZ), hasTex(false), png("") {}
 
 	void draw(bool drawBoundingBox, bool hasColor, double colorR, double colorG, double colorB);
 	void drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor) {

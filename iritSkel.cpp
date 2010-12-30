@@ -224,6 +224,10 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				} else {
 					newVertex = new Hw1Vertex(x, y, z);
 				}
+				if (PVertex->Attr && PVertex->Attr->Type == IP_ATTR_UV) {
+					newVertex->u = PVertex->Attr->U.UV[0];
+					newVertex->v = PVertex->Attr->U.UV[1];
+				}
 				verticesVector->push_back(newVertex);
 				PVertex = PVertex -> Pnext;
 			}
@@ -245,6 +249,12 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 	} else {
 		newObject = new Hw1Object(polygonVector, minX, minY, minZ, maxX, maxY, maxZ);
 	}
+	if (CGSkelGetObjectPTexture(PObj)) {
+		newObject->png = CGSkelGetObjectPTexture(PObj);
+		newObject->hasTex = true;
+	}
+	static int name = 0;
+	newObject->name = name++;
 	hw1Objects.push_back(newObject);
 	return true;
 }

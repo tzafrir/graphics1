@@ -15,6 +15,9 @@
 #include "Light.h"
 #include "afxdlgs.h"
 
+#include <string>
+
+
 class COpenGLView : public CView
 {
 protected: // create from serialization only
@@ -98,7 +101,7 @@ private:
 	void drawAllObjects(); // hw1
 	void setProjection();
 	void setupLighting(bool firstCall);
-
+	void loadTexture(std::string tex);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
