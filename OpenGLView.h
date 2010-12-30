@@ -51,6 +51,7 @@ private:
 	CPoint lastClicked;				// hw1: 
 	int nSpace;						// hw1: object / view space
 	int mouseSensitivity;			// hw1
+	float sensFactor;				// hw1
 	bool m_bShowNormals;			// hw1: draw normals
 	bool multipleViews;				// hw1
 	bool multipleObjects;			// hw1
@@ -75,9 +76,15 @@ private:
 	double m_activeColorB;	// $$$$$
 	bool m_bIsActiveView;
 
-	double m_lTotalSize; // Diagonal of the box
-	double m_lZoomRatio; // Amount of zoom in perspective mode (managed by Scale() )
-	double m_lPerspectiveWidthRatio; //  How wide should the aspect ratio be in perspective mode
+	double m_lTotalSize; // 0.5 Diagonal of the bounding box
+	double m_lZoomRatio; // Amount of zoom in both perspective/ortho mode (managed by Scale() )
+	
+	double m_lPerspectiveRight; 
+	double m_lPerspectiveLeft;
+	double m_lPerspectiveTop;
+	double m_lPerspectiveBottom;
+	double m_lPerspectiveDVal;
+
 	bool m_bMayDraw; // For internal use - lock for drawing
 	bool m_bDrawBoundingBox; // $$ Should draw bounding box around each object
 
@@ -95,6 +102,8 @@ private:
 	typedef GLfloat mat16[16];
 	static const int MAX_VIEWS = 100;			// must be equal to (int)^2
 	mat16 viewMatrix[MAX_VIEWS];
+
+
 	int numViews;
 	int numViewsRows;
 	int numViewsCol;
@@ -169,7 +178,7 @@ protected:
 	afx_msg void OnUpdateLightShadingGouraud(CCmdUI* pCmdUI);
 	afx_msg void OnLightConstants();
 
-	afx_msg void COpenGLView::Scale(float scale);		//hw1
+	afx_msg void COpenGLView::Scale(float scaleX, float scaleY, float scaleZ);//hw1
 	afx_msg void COpenGLView::Rotate(float angle);		//hw1
 	afx_msg void COpenGLView::Translate(int x, int y);	//hw1
 
@@ -195,6 +204,7 @@ public:
 	afx_msg void OnViewVerticesnormals();
 	afx_msg void OnUpdateViewVerticesnormals(CCmdUI *pCmdUI);
 	afx_msg void OnOptionsMousesensitivity();
+	afx_msg void COpenGLView::SetSensFactor();
 	afx_msg void OnOptionsPerspectivecontrol();
 	afx_msg void OnViewBoundingBox();
 	afx_msg void OnUpdateViewBoundingBox(CCmdUI *pCmdUI);
@@ -205,6 +215,8 @@ public:
 	afx_msg void OnActionResetcolors();
 	afx_msg void OnViewMultipleobjects();
 	afx_msg void OnUpdateViewMultipleobjects(CCmdUI *pCmdUI);
+	afx_msg void OnViewWireframe();
+	afx_msg void OnUpdateViewWireframe(CCmdUI *pCmdUI);
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

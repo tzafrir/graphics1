@@ -105,15 +105,17 @@ private:
 			// Cross first two vertices:
 			Hw1Vertex* v1 = vertices->at(0);
 			Hw1Vertex* v2 = vertices->at(1);
-			double x1 = v1->getX();
-			double y1 = v1->getY();
-			double z1 = v1->getZ();
-			double x2 = v2->getX();
-			double y2 = v2->getY();
-			double z2 = v2->getZ();
+			Hw1Vertex* v3 = vertices->at(2);
+			double x1 = v2->getX() - v1->getX();
+			double y1 = v2->getY() - v1->getY();
+			double z1 = v2->getZ() - v1->getZ();
+			double x2 = v3->getX() - v2->getX();
+			double y2 = v3->getY() - v2->getY();
+			double z2 = v3->getZ() - v2->getZ();
 
 			x = y1*z2 - z1*y2;
-			y = z1*x2 - x1*z2;
+			//y = x1*z2 - z1*x2;	//new
+			y = z1*x2 - x1*z2;	//old
 			z = x1*y2 - y1*x2;
 		}
 		Hw1Normal normal(x, y, z);

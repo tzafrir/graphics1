@@ -47,6 +47,12 @@
 #define IDC_MATERIAL_SPECULAR           1042
 #define IDC_EDIT2                       1047
 #define IDC_EDIT1                       1049
+#define IDC_EDIT_L                      1052
+#define IDC_EDIT_R                      1057
+#define IDC_EDIT_D                      1058
+#define IDC_EDIT_L2                     1059
+#define IDC_EDIT_B                      1059
+#define IDC_EDIT_T                      1060
 #define ID_FILE_LOAD                    32771
 #define ID_VIEW_ORTHOGRAPHIC            32772
 #define ID_VIEW_PERSPECTIVE             32773
@@ -85,14 +91,16 @@
 #define ID_ACTION_RESETCOLORS           32827
 #define ID_VIEW_MULTIPLEOBJECTS         32828
 #define ID_VIEW_OBJECT2                 32829
+#define ID_Menu32830                    32830
+#define ID_VIEW_WIREFRAME               32831
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         32830
-#define _APS_NEXT_CONTROL_VALUE         1050
+#define _APS_NEXT_COMMAND_VALUE         32832
+#define _APS_NEXT_CONTROL_VALUE         1053
 #define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif

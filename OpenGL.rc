@@ -80,6 +80,7 @@ BEGIN
         MENUITEM "Polygons Normals",            ID_VIEW_POLYGONSNORMALS
         MENUITEM "Vertices Normals",            ID_VIEW_VERTICESNORMALS
         MENUITEM "Bounding Box",                ID_VIEW_BOUNDING_BOX
+        MENUITEM "Wireframe",                   ID_VIEW_WIREFRAME
         MENUITEM SEPARATOR
         MENUITEM "Multiple Views...",           ID_VIEW_MULTIPLEVIEWS
         MENUITEM "Multiple Objects",            ID_VIEW_MULTIPLEOBJECTS
@@ -258,15 +259,20 @@ BEGIN
     LTEXT           "Please choose mouse sensitivity.\nValues are Integers from 1 to 100",IDC_STATIC,7,7,130,19
 END
 
-IDD_RATIO_DLG DIALOGEX 0, 0, 144, 46
+IDD_RATIO_DLG DIALOGEX 0, 0, 141, 130
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Perspective Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,87,25,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,7,25,50,14
-    EDITTEXT        IDC_EDIT1,58,26,28,13,ES_CENTER | ES_AUTOHSCROLL
-    LTEXT           "Please choose Perspective aspect ratio.\nValues are Doubles from 0.01 to 10",IDC_STATIC,7,7,130,19
+    DEFPUSHBUTTON   "OK",IDOK,84,109,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,109,50,14
+    EDITTEXT        IDC_EDIT_L,29,48,28,13,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "Please choose Perspective aspect ratio.\nValues are Doubles from 0.01 to 10",IDC_STATIC,7,7,127,19
+    EDITTEXT        IDC_EDIT_R,85,48,28,13,ES_CENTER | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_D,77,88,28,13,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "d value",IDC_STATIC,45,89,25,13
+    EDITTEXT        IDC_EDIT_B,57,63,28,13,ES_CENTER | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_T,57,33,28,13,ES_CENTER | ES_AUTOHSCROLL
 END
 
 
@@ -351,9 +357,9 @@ BEGIN
     IDD_RATIO_DLG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 137
+        RIGHTMARGIN, 134
         TOPMARGIN, 7
-        BOTTOMMARGIN, 39
+        BOTTOMMARGIN, 123
     END
 END
 #endif    // APSTUDIO_INVOKED
