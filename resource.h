@@ -52,6 +52,7 @@
 #define IDC_EDIT_L                      1052
 #define IDC_SLIDER_DENS                 1053
 #define IDC_SLIDER2                     1054
+#define IDC_SLIDER_ALPHA                1054
 #define IDC_EDIT_START                  1055
 #define IDC_EDIT_R                      1057
 #define IDC_EDIT_D                      1058
@@ -101,13 +102,15 @@
 #define ID_VIEW_ENABLEFOG               32833
 #define ID_VIEW_SETFOGPARAMETERS        32834
 #define ID_MATERIAL_SETMATERIALPARAMETERS 32835
+#define ID_VIEW_TESSELLATION            32836
+#define ID_ACTION_SETFOGCOLOR           32837
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        151
-#define _APS_NEXT_COMMAND_VALUE         32836
+#define _APS_NEXT_COMMAND_VALUE         32838
 #define _APS_NEXT_CONTROL_VALUE         1056
 #define _APS_NEXT_SYMED_VALUE           108
 #endif

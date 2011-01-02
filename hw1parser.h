@@ -152,7 +152,7 @@ public:
 			double normalZ) : vertices(vertices), normal(normalX, normalY, normalZ) {
 		initialize();
 	}
-	void draw();
+	void draw(bool useTessellation);
 	void drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor);
 };
 
@@ -192,7 +192,8 @@ public:
 		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB), minX(minX), minY(minY), minZ(minZ),
 		maxX(maxX), maxY(maxY), maxZ(maxZ), hasTex(false), png("") {}
 
-	void draw(bool drawBoundingBox, bool hasColor, double colorR, double colorG, double colorB);
+	void draw(bool drawBoundingBox,  bool useTessellation,
+				bool hasColor, double colorR, double colorG, double colorB);
 	void drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor) {
 		for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			    it != polygons->end();

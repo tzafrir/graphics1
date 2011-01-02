@@ -2,6 +2,7 @@
 //
 #include "stdafx.h"
 #include "OpenGL.h"
+#include "GL\glu.h"
 
 #include "OpenGLDoc.h"
 #include "OpenGLView.h"
@@ -116,6 +117,10 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_COMMAND(ID_VIEW_ENABLEFOG, &COpenGLView::OnViewEnablefog)
 	ON_COMMAND(ID_VIEW_SETFOGPARAMETERS, &COpenGLView::OnViewSetfogparameters)
 	ON_COMMAND(ID_MATERIAL_SETMATERIALPARAMETERS, &COpenGLView::OnMaterialSetmaterialparameters)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_ENABLEFOG, &COpenGLView::OnUpdateViewEnablefog)
+	ON_COMMAND(ID_VIEW_TESSELLATION, &COpenGLView::OnViewTessellation)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_TESSELLATION, &COpenGLView::OnUpdateViewTessellation)
+	ON_COMMAND(ID_ACTION_SETFOGCOLOR, &COpenGLView::OnActionSetfogcolor)
 END_MESSAGE_MAP()
 
 
@@ -160,10 +165,10 @@ COpenGLView::COpenGLView()
 	// FOG PARAMETERS
 	m_fogEnabled = false;
 	density = fogDialog::DENSITY_DEF;
-	fogColor[0] = fogDialog::FOG_COLOR_R_DEF;
-	fogColor[1] = fogDialog::FOG_COLOR_G_DEF;
-	fogColor[2] = fogDialog::FOG_COLOR_B_DEF;
-	fogColor[3] = fogDialog::FOG_COLOR_A_DEF;
+	fogColor[0] = 0.5 ;//fogDialog::FOG_COLOR_R_DEF;
+	fogColor[1] = 0.5 ;//fogDialog::FOG_COLOR_G_DEF;
+	fogColor[2] = 0.5 ;//fogDialog::FOG_COLOR_B_DEF;
+	fogColor[3] = 1 ;//fogDialog::FOG_COLOR_A_DEF;
 	fogStart = fogDialog::FOG_START_DEF;
 	fogEnd = fogDialog::FOG_END_DEF;
 	fogMode = fogDialog::FOG_MODE_DEF;
@@ -171,6 +176,7 @@ COpenGLView::COpenGLView()
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
 	m_bMayDraw = false; // Wait until size and center of object is calculated
+	m_bTessellation = false;
 	m_bDrawBoundingBox = false;
 	m_lNormalScale = 1.0;
 	nSpace = ID_SPACE_SCREEN;	//hw1
@@ -412,7 +418,7 @@ BOOL COpenGLView::SetupViewingFrustum(void)
 	double zFactor = m_lPerspectiveDVal/perspectiveDialog::PERS_DEFAULT_D;
 	glFrustum(-q*m_lPerspectiveLeft, q*m_lPerspectiveRight,
 				-r*m_lPerspectiveBottom, r*m_lPerspectiveTop, 
-				1.0*zFactor, 5*1.2*m_lTotalSize*zFactor);					//test
+				1.0*zFactor+m_lCenterZ, 10*1.2*m_lTotalSize*zFactor+m_lCenterZ);					//test
 
 	// NOTE: Other commands you could have here are
 	// glFrustum, which gives you much more control over
@@ -460,37 +466,21 @@ BOOL COpenGLView::SetupViewingOrthoConstAspect(void)
 
 void COpenGLView::EnableFog (void) {
 	glEnable (GL_DEPTH_TEST); //enable the depth testing
-	int t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
+
 	glEnable (GL_FOG); //enable the fog
-	t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
+
 	glFogf (GL_FOG_START,fogStart);
-	t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
+
 	glFogf (GL_FOG_END,fogEnd);
-	t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
-	glFogi (GL_FOG_MODE, GL_EXP); //set the fog mode to GL_EXP2
-	t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
+
+	glFogi (GL_FOG_MODE, fogMode); //set the fog mode to GL_EXP2
+
 	glFogfv (GL_FOG_COLOR, fogColor); //set the fog color to our color chosen above
-	t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
+
 	glFogf (GL_FOG_DENSITY, density/100); //set the density to the value above
-	t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
-	glHint (GL_FOG_HINT, fogMode); // set the fog to look the	nicest, may slow down on older cards
-	t = ::glGetError();
-	if ( GL_NO_ERROR !=  t)
-		;
+
+	glHint (GL_FOG_HINT, GL_NICEST); // set the fog to look the	nicest, may slow down on older cards
+
 }
 
 
@@ -529,7 +519,9 @@ void COpenGLView::OnDraw(CDC* pDC)
 		glClearColor(0.0, 0.0, 0.0, 0.0);
 	}
 	if (m_fogEnabled)
-			EnableFog();
+		EnableFog();
+	else 
+		glDisable(GL_FOG);
 	//draw_axis();
 
 	for (int  i=0; i<numViewsCol ;i++){
@@ -799,7 +791,7 @@ void COpenGLView::OnMenu()
 	m_lPerspectiveDVal = perspectiveDialog::PERS_DEFAULT_D;
 	m_bChoseColor = false;
 	m_backChoseColor = false;
-	Hw1Polygon::drawingMode = GL_POLYGON;
+	Hw1Polygon::drawingMode = GL_POLYGON ;//GL_POLYGON;
 
 	SetSensFactor();
 
@@ -943,7 +935,8 @@ double Hw1Polygon::normalScale = 1.0;
 int Hw1Polygon::drawingMode = GL_POLYGON; // Set to GL_LINE_LOOP to get wireframe mode.
 double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
-void Hw1Object::draw(bool shouldDrawBoundingBox, bool hasColor, double cR, double cG, double cB) {
+void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
+					 bool hasColor, double cR, double cG, double cB) {
 	if (hasColor) {
 		// color is an integer in 0-255 range. glColor3fparams are 0.0-1.0 doubles
 		glColor3f(cR/255, cG/255, cB/255);
@@ -953,7 +946,7 @@ void Hw1Object::draw(bool shouldDrawBoundingBox, bool hasColor, double cR, doubl
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			it != polygons->end();
 			++it) {
-		(*it)->draw();
+		(*it)->draw(useTessellation);
 	}
 	if (shouldDrawBoundingBox) {
 		drawBoundingBox();
@@ -999,8 +992,15 @@ void Hw1Object::drawBoundingBox() {
 	glEnd();
 }
 
-void Hw1Polygon::draw() {
-	glBegin(drawingMode);
+
+void Hw1Polygon::draw(bool useTessellation) {
+
+	if (useTessellation){
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glBegin(GL_TRIANGLE_FAN);
+	}else{
+		glBegin(drawingMode);
+	}
 	for (vector<Hw1Vertex*>::iterator it = vertices->begin();
 			it != vertices->end();
 			++it) {
@@ -1174,7 +1174,11 @@ void COpenGLView::Translate(int x, int y)
 			
 				glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 				glLoadIdentity();
-				glTranslatef(x*transFactorX, (y)*transFactorY,0);
+				if ((m_nAxis == ID_AXIS_X) || (m_nAxis == ID_AXIS_Y)){
+					glTranslatef(x*transFactorX, (y)*transFactorY,0);
+				} else if (m_nAxis == ID_AXIS_Z){// it is ID_AXIS_Z
+					glTranslatef(x*transFactorX, 0,-(y)*transFactorY);
+				}
 				glMultMatrixf(matrix);
 			} else if (nSpace == ID_SPACE_OBJECT){
 				glTranslatef(x*transFactorX, y*(m_nAxis == ID_AXIS_Y)*transFactorY,-y*(m_nAxis == ID_AXIS_Z)*transFactorY);
@@ -1328,7 +1332,7 @@ void COpenGLView::drawAllObjects() {
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
-		(*it)->draw(m_bDrawBoundingBox, m_bChoseColor, m_lColorR, m_lColorG, m_lColorB);
+		(*it)->draw(m_bDrawBoundingBox, m_bTessellation,m_bChoseColor, m_lColorR, m_lColorG, m_lColorB);
 		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals, m_lTotalSize);
 	}
 }
@@ -1466,6 +1470,22 @@ void COpenGLView::OnActionSetbackgroundcolor()
 		return;
 	}
 }
+void COpenGLView::OnActionSetfogcolor()
+{
+	CColorDialog colorDlg;
+	INT_PTR result = colorDlg.DoModal();
+
+	if ( result == IDOK){
+		COLORREF color;
+		color = colorDlg.GetColor();
+		fogColor[0] =  GetRValue(color);
+		fogColor[1] =  GetGValue(color);
+		fogColor[2] =  GetBValue(color);
+	} else if ( result == IDCANCEL){
+		return;
+	}
+}
+
 void COpenGLView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {	
 	if (GetKeyState(VK_CONTROL) < 0){ // Ctrl is being pressed
@@ -1504,7 +1524,8 @@ void COpenGLView::OnActionResetcolors()
 
 void COpenGLView::OnUpdateViewWireframe(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetCheck(Hw1Polygon::drawingMode == GL_LINE_LOOP);
+	pCmdUI->SetCheck((Hw1Polygon::drawingMode == GL_LINE_LOOP)
+					||(m_bTessellation == true));
 }
 
 inline double _d256(int color) {
@@ -1617,7 +1638,26 @@ void COpenGLView::setupLighting(bool firstCall) {
 void COpenGLView::OnViewEnablefog()
 {
 	m_fogEnabled = (!m_fogEnabled);
+	Invalidate();
 }
+
+void COpenGLView::OnUpdateViewEnablefog(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_fogEnabled == true);
+}
+
+void COpenGLView::OnViewTessellation()
+{
+	m_bTessellation = (!m_bTessellation);
+	
+}
+
+void COpenGLView::OnUpdateViewTessellation(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bTessellation == true);
+}
+
+
 
 void COpenGLView::OnViewSetfogparameters()
 {
@@ -1629,7 +1669,7 @@ void COpenGLView::OnViewSetfogparameters()
 		fogColor[0] = dlg.getRed();
 		fogColor[1] = dlg.getGreen();
 		fogColor[2] = dlg.getBlue();
-		fogColor[3] = dlg.getAlfa();
+		fogColor[3] = (double)dlg.getAlpha()/100;
 		fogStart = dlg.getStart();
 		fogEnd = dlg.getEnd();
 		fogMode = dlg.getMode();
@@ -1684,3 +1724,8 @@ void COpenGLView::loadTexture(string png) {
 	delete bmp;
 
 }
+
+
+
+
+

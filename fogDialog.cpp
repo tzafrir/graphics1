@@ -14,10 +14,11 @@ fogDialog::fogDialog(	double valDens, double valColR , double valColG ,
 						double valColB , double valColA , double valStart ,
 						double valEnd , 
 						int valMode , 
+						int valQuality ,
 						CWnd* pParent/*=NULL*/)
 						: CDialog(fogDialog::IDD, pParent),
 							density(valDens),red(valColR),green(valColG),blue(valColB),
-							alfa(valColA), start(valStart), end(valEnd),mode(valMode)
+							alpha(valColA*100), start(valStart), end(valEnd),mode(valMode), quality(valQuality)
 {
 }
 
@@ -32,6 +33,7 @@ void fogDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_START, start);
 	DDX_Text(pDX, IDC_EDIT_END, end);
 	DDX_Slider(pDX, IDC_SLIDER_DENS , density);
+	DDX_Slider(pDX, IDC_SLIDER_ALPHA , alpha);
 }
 
 

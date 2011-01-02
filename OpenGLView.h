@@ -94,8 +94,10 @@ private:
 	GLfloat fogStart;
 	GLfloat fogEnd;
 	int fogMode;
+	int fogQuality;
 
 	bool m_bMayDraw; // For internal use - lock for drawing
+	bool m_bTessellation;
 	bool m_bDrawBoundingBox; // $$ Should draw bounding box around each object
 
 	void drawAllObjects(); // hw1
@@ -232,6 +234,10 @@ public:
 	afx_msg void OnViewEnablefog();
 	afx_msg void OnViewSetfogparameters();
 	afx_msg void OnMaterialSetmaterialparameters();
+	afx_msg void OnUpdateViewEnablefog(CCmdUI *pCmdUI);
+	afx_msg void OnViewTessellation();
+	afx_msg void OnUpdateViewTessellation(CCmdUI *pCmdUI);
+	afx_msg void OnActionSetfogcolor();
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

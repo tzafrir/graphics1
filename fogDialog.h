@@ -9,14 +9,15 @@ class fogDialog : public CDialog
 
 public:
 	static const int DENSITY_DEF = 30;
-	static const int FOG_COLOR_R_DEF = 0;
-	static const int FOG_COLOR_G_DEF = 0;
-	static const int FOG_COLOR_B_DEF = 0;
+	static const int FOG_COLOR_R_DEF = 1;
+	static const int FOG_COLOR_G_DEF = 1;
+	static const int FOG_COLOR_B_DEF = 1;
 	static const int FOG_COLOR_A_DEF = 1;
 
 	static const int FOG_START_DEF = 1;
-	static const int FOG_END_DEF= 100;
+	static const int FOG_END_DEF= 50;
 	static const int FOG_MODE_DEF = GL_LINEAR;	//{GL_EXP, GL_EXP2, GL_LINEAR}
+	static const int FOG_QUALITY_DEF = GL_NICEST; // GL_NICEST
 
 	fogDialog(	double valDens = DENSITY_DEF,
 				double valColR = FOG_COLOR_R_DEF,
@@ -26,6 +27,7 @@ public:
 				double valStart = FOG_START_DEF,
 				double valEnd = FOG_END_DEF,
 				int valMode = FOG_MODE_DEF,
+				int quality = FOG_QUALITY_DEF,
 				CWnd* pParent = NULL);   // standard constructor
 	virtual ~fogDialog();
 
@@ -39,15 +41,16 @@ protected:
 	double red ;
 	double green ;
 	double blue ;
-	double alfa ;
+	int alpha ;
 	double start ;
 	double end ;
 	int mode ;
+	int quality;
 
 	DECLARE_MESSAGE_MAP()
 
 public:
-	double fogDialog::getDensity() {
+	int fogDialog::getDensity() {
 		return density;
 	}
 	double fogDialog::getRed() {
@@ -59,8 +62,8 @@ public:
 	double fogDialog::getBlue() {
 		return blue;
 	}
-	double fogDialog::getAlfa() {
-		return alfa;
+	double fogDialog::getAlpha() {
+		return alpha;
 	}
 	double fogDialog::getStart() {
 		return start;
@@ -68,7 +71,10 @@ public:
 	double fogDialog::getEnd() {
 		return end;
 	}
-	double fogDialog::getMode() {
+	int fogDialog::getMode() {
 		return mode;
+	}
+	int fogDialog::getQuality() {
+		return quality;
 	}
 };
