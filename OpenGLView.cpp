@@ -41,6 +41,22 @@ using std::vector;
 extern vector<Hw1Object*> hw1Objects;
 extern void clearHw1Objects();
 
+#ifndef GL_LIGHT_MODEL_COLOR_CONTROL 
+#define GL_LIGHT_MODEL_COLOR_CONTROL 0x81F8 
+#endif 
+
+#ifndef GL_SINGLE_COLOR 
+#define GL_SINGLE_COLOR 0x81F9 
+#endif 
+
+#ifndef GL_SEPARATE_SPECULAR_COLOR 
+#define GL_SEPARATE_SPECULAR_COLOR 0x81FA 
+#endif
+
+// ugly globals;
+
+int g_w, g_h, g_c;
+
 /////////////////////////////////////////////////////////////////////////////
 // COpenGLView
 
@@ -137,10 +153,12 @@ void auxSolidCone(GLdouble radius, GLdouble height) {
 
 double COpenGLView::zoomRatioDefault = 0.6;
 
-COpenGLView::COpenGLView()
+COpenGLView::COpenGLView() : globalTexture(NULL)
 {
+	Init();
+}
 
-
+void COpenGLView::Init() {
 	// Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
@@ -211,6 +229,32 @@ COpenGLView::COpenGLView()
 
 	m_nLightShading = ID_LIGHT_SHADING_GOURAUD;
 
+	m_bUseModelColors = true;
+	m_bDrawWireframe = false;
+	m_bCullBackFaces = false;
+
+	texGenU[0] = 1.0;
+	texGenU[1] = 0.0;
+	texGenU[2] = 0.0;
+	texGenU[3] = 1.0;
+
+	texGenV[0] = 0.0;
+	texGenV[1] = -1.0;
+	texGenV[2] = 0.0;
+	texGenV[3] = 1.0;
+
+	m_bGenerateTexturesU = false;
+	m_bGenerateTexturesV = false;
+	m_bGentexUScreenSpace = m_bGentexVScreenSpace = false;
+
+	tex_rotation = 0;
+	tex_scaleU = tex_scaleV = 1.0;
+	tex_transU = tex_transV = .0;
+
+	s_repeat = true;
+	t_repeat = true;
+
+	m_bUseMipmaps = true;
 }
 
 COpenGLView::~COpenGLView()
@@ -524,6 +568,50 @@ void COpenGLView::OnDraw(CDC* pDC)
 		glDisable(GL_FOG);
 	//draw_axis();
 
+	if (m_bDrawWireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	if (m_bCullBackFaces) {
+		glEnable(GL_CULL_FACE);
+	}
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	if (m_bGenerateTexturesU) {
+		int mode1 = m_bGentexUScreenSpace ? GL_EYE_LINEAR : GL_OBJECT_LINEAR;
+		int mode2 = m_bGentexUScreenSpace ? GL_EYE_PLANE : GL_OBJECT_PLANE;
+		glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, mode1);
+		glTexGenfv(GL_S, mode2, texGenU);
+		glEnable(GL_TEXTURE_GEN_S);
+	} else {
+		glDisable(GL_TEXTURE_GEN_S);
+	}
+
+	if (m_bGenerateTexturesV) {
+		int mode1 = m_bGentexVScreenSpace ? GL_EYE_LINEAR : GL_OBJECT_LINEAR;
+		int mode2 = m_bGentexVScreenSpace ? GL_EYE_PLANE : GL_OBJECT_PLANE;
+		glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, mode1);
+		glTexGenfv(GL_T, mode2, texGenV);
+		glEnable(GL_TEXTURE_GEN_T);
+	} else {
+		glDisable(GL_TEXTURE_GEN_T);
+	}
+
+	int s_mode = s_repeat ? GL_REPEAT : GL_CLAMP;
+	int t_mode = t_repeat ? GL_REPEAT : GL_CLAMP;
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, s_mode);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, t_mode);
+
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glPushMatrix();
+	glRotatef(tex_rotation, 0.0, 0.0, 1.0);
+	glScalef(tex_scaleU, tex_scaleV, 0.0);
+	glTranslatef(tex_transU, tex_transV, 0.0);
+	glMatrixMode(GL_MODELVIEW);
+
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
 			for(int k=0 ; k<numObjects ; k++){
@@ -558,7 +646,10 @@ void COpenGLView::OnDraw(CDC* pDC)
 	}
 
 	glPopMatrix();
-	
+
+	glMatrixMode(GL_TEXTURE);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
 	RenderScene();
 
 
@@ -650,6 +741,10 @@ void COpenGLView::RenderScene() {
 	return;
 }
 
+typedef struct texture_ {
+	unsigned char *bmp;
+	int w, h, c;
+} texture;
 
 void COpenGLView::OnFileLoad() 
 {
@@ -673,7 +768,9 @@ void COpenGLView::OnFileLoad()
 				it != hw1Objects.end();
 				++it) {
 			Hw1Object* o = *it;
-			if (o->hasTex) loadTexture(o->png);
+			if (o->hasTex) {
+			  o->loadTexture();
+			}
 			if (!setMinMax) {
 				minX = o->getMinX();
 				maxX = o->getMaxX();
@@ -703,13 +800,79 @@ void COpenGLView::OnFileLoad()
 		mouseSensitivity = sensitivityDialog::SENS_DEFAULT;
 		m_bMayDraw = true;
 		
+		
+		PngWrapper p("03.png");
+		if (!p.ReadPng()) {
+			string msg = "Unable to read png file";
+			AfxMessageBox(msg.c_str());
+			throw 0;
+		}
+		g_w = p.GetWidth();
+		g_h = p.GetHeight();
+		g_c = p.GetNumChannels();
+		if (globalTexture != NULL) delete globalTexture;
+		globalTexture = new unsigned char[g_w*g_h*g_c];
+		int curPixel = 0;
+		for (int _h = 0; _h < g_h; _h++) {
+			for (int _w = 0; _w < g_w; _w++) {
+				int pixel = p.GetValue(_w, _h);
+				if (1 == g_c) {
+					globalTexture[curPixel++] = pixel;
+					globalTexture[curPixel++] = pixel;
+					globalTexture[curPixel++] = pixel;
+					continue;
+				}
+				globalTexture[curPixel++] = GET_R(pixel);
+				globalTexture[curPixel++] = GET_G(pixel);
+				globalTexture[curPixel++] = GET_B(pixel);
+				if (4 == g_c) {
+					globalTexture[curPixel++] = GET_A(pixel);
+				}
+			}
+		}
+		
+
 		Invalidate();	// force a WM_PAINT for drawing.
 	} 
 
 }
 
 
-
+void loadMipmap(string basename, texture* tex) {
+	for (int i = 0; i < 6; i++) {
+		texture &t = tex[i];
+		char c = 'a' + i;
+		string fullname = basename + "_" + c + ".png";
+		PngWrapper p(fullname.c_str());
+		if (!p.ReadPng()) {
+			string msg = "Unable to read png file";
+			AfxMessageBox(msg.c_str());
+			throw 0;
+		}
+		t.w = p.GetWidth();
+		t.h = p.GetHeight();
+		t.c = p.GetNumChannels();
+		t.bmp = new unsigned char[t.w*t.h*t.c];
+		int curPixel = 0;
+		for (int _h = 0; _h < t.h; _h++) {
+			for (int _w = 0; _w < t.w; _w++) {
+				int pixel = p.GetValue(_w, _h);
+				if (1 == t.c) {
+					t.bmp[curPixel++] = pixel;
+					t.bmp[curPixel++] = pixel;
+					t.bmp[curPixel++] = pixel;
+					continue;
+				}
+				t.bmp[curPixel++] = GET_R(pixel);
+				t.bmp[curPixel++] = GET_G(pixel);
+				t.bmp[curPixel++] = GET_B(pixel);
+				if (4 == t.c) {
+					t.bmp[curPixel++] = GET_A(pixel);
+				}
+			}
+		}
+	}
+}
 
 
 // VIEW HANDLERS ///////////////////////////////////////////
@@ -770,6 +933,9 @@ void COpenGLView::OnUpdateViewCameraview(CCmdUI* pCmdUI)
 // TODO: rename this
 void COpenGLView::OnMenu()
 {
+
+	Init();
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
@@ -791,7 +957,6 @@ void COpenGLView::OnMenu()
 	m_lPerspectiveDVal = perspectiveDialog::PERS_DEFAULT_D;
 	m_bChoseColor = false;
 	m_backChoseColor = false;
-	Hw1Polygon::drawingMode = GL_POLYGON ;//GL_POLYGON;
 
 	SetSensFactor();
 
@@ -932,16 +1097,58 @@ void COpenGLView::OnLightConstants()
 
 double Hw1Polygon::normalScaleDefault = 1.0;
 double Hw1Polygon::normalScale = 1.0;
-int Hw1Polygon::drawingMode = GL_POLYGON; // Set to GL_LINE_LOOP to get wireframe mode.
 double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
+<<<<<<< HEAD
 void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 					 bool hasColor, double cR, double cG, double cB) {
+=======
+void Hw1Object::draw(bool shouldDrawBoundingBox, bool hasColor, double cR, double cG, double cB,
+		unsigned char *tex, bool hasMipmaps) {
+>>>>>>> tzafrir
 	if (hasColor) {
 		// color is an integer in 0-255 range. glColor3fparams are 0.0-1.0 doubles
 		glColor3f(cR/255, cG/255, cB/255);
 	} else {
 		glColor3f(colorR, colorG, colorB);
+	}
+	if (tex != NULL) {
+		c = g_c;
+		h = g_h;
+		w = g_w;
+	}
+	if (hasTex || (tex && polygons->at(0)->vertices->at(0)->hasUV)) {
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		GLenum format = (c == 4) ? GL_RGBA : GL_RGB;
+		unsigned char* textureSrc = tex ? tex : bmp;
+		if (png != "" && hasMipmaps) {
+			int s = png.find(".png");
+			string base = png.substr(0, s);
+			static texture maps[6];
+			static bool once = true;
+			if (once) {
+				loadMipmap(base, maps);
+				once = false;
+			}
+			for (int i = 0; i < 6; i++) {
+				texture &map = maps[i];
+				GLenum _format = (map.c == 4) ? GL_RGBA : GL_RGB;
+				glTexImage2D(GL_TEXTURE_2D, i, 4, map.w, map.h, 0, _format, GL_UNSIGNED_BYTE, map.bmp);
+			}
+		} else {
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, format, GL_UNSIGNED_BYTE, textureSrc);
+		}
+		glEnable(GL_TEXTURE_2D);
+		if (hasMipmaps) {
+			glDepthFunc(GL_LEQUAL);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		} else {
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		}
+	} else {
+		glDisable(GL_TEXTURE_2D);
 	}
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			it != polygons->end();
@@ -998,9 +1205,10 @@ void Hw1Polygon::draw(bool useTessellation) {
 	if (useTessellation){
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glBegin(GL_TRIANGLE_FAN);
-	}else{
-		glBegin(drawingMode);
+	} else {
+  	glBegin(GL_POLYGON);
 	}
+
 	for (vector<Hw1Vertex*>::iterator it = vertices->begin();
 			it != vertices->end();
 			++it) {
@@ -1332,8 +1540,10 @@ void COpenGLView::drawAllObjects() {
 	for (vector<Hw1Object*>::iterator it = hw1Objects.begin();
 			it != hw1Objects.end();
 			++it) {
-		(*it)->draw(m_bDrawBoundingBox, m_bTessellation,m_bChoseColor, m_lColorR, m_lColorG, m_lColorB);
-		(*it)->drawNormals(m_bShowNormals, m_bDrawVertexNormals, m_lTotalSize);
+
+		Hw1Object* o = *it;
+		o->draw(m_bDrawBoundingBox, m_bTessellation, m_bChoseColor, m_lColorR, m_lColorG, m_lColorB, globalTexture, m_bUseMipmaps);
+		o->drawNormals(m_bShowNormals, m_bDrawVertexNormals, m_lTotalSize);
 	}
 }
 
@@ -1365,9 +1575,7 @@ void COpenGLView::OnViewPolygonsnormals()
 void COpenGLView::OnViewWireframe()
 {
 	 // Set to GL_LINE_LOOP to get wireframe mode.
-	Hw1Polygon::drawingMode = (Hw1Polygon::drawingMode == GL_POLYGON) ?
-								GL_LINE_LOOP : 
-								GL_POLYGON;
+	m_bDrawWireframe = !m_bDrawWireframe;
 }
 
 void COpenGLView::OnUpdateViewPolygonsnormals(CCmdUI *pCmdUI)
@@ -1524,8 +1732,7 @@ void COpenGLView::OnActionResetcolors()
 
 void COpenGLView::OnUpdateViewWireframe(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetCheck((Hw1Polygon::drawingMode == GL_LINE_LOOP)
-					||(m_bTessellation == true));
+	pCmdUI->SetCheck(m_bDrawWireframe || (m_bTessellation == true));
 }
 
 inline double _d256(int color) {
@@ -1541,18 +1748,19 @@ void COpenGLView::setupLighting(bool firstCall) {
 	}
 
 	// Material properties
-	{
-	GLfloat specular[] = { m_lMaterialSpecular, m_lMaterialSpecular, m_lMaterialSpecular, 1.0 };
-	GLfloat shininess[] = { m_nMaterialShininessFactor };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+	if (m_bUseModelColors) {
+		glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+		glEnable(GL_COLOR_MATERIAL);
 	}
-
+	
+	{
+		GLfloat specular[] = { m_lMaterialSpecular, m_lMaterialSpecular, m_lMaterialSpecular, 1.0 };
+		GLfloat shininess[] = { m_nMaterialShininessFactor };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+	}
    static const double cutoff = 60.0;
    static const double exponent = 2.0;
-   GLfloat spotDirection0[] = { -1.0, 0.0, -3.0, 1.0};
-   GLfloat spotDirection1[] = { 1.0, 0.0, -3.0, 1.0};
-   GLfloat spotDirection2[] = { 0.0, 1.0, -5.0, 1.0};
 
 	glEnable(GL_LIGHTING);
 	int _l[] = { GL_LIGHT0,
@@ -1565,9 +1773,12 @@ void COpenGLView::setupLighting(bool firstCall) {
 					 GL_LIGHT7 };
 
 	for (int i = 0; i < 8; i++) {
-		LightParams &lp = m_lights[i];
-		if (!lp.enabled) continue;
 		int lightId = _l[i];
+		LightParams &lp = m_lights[i];
+		if (!lp.enabled) {
+			glDisable(lightId);
+			continue;
+		}
 		glEnable(lightId);
 
 		// Control object space / screen space lighting per light by calling
@@ -1593,38 +1804,9 @@ void COpenGLView::setupLighting(bool firstCall) {
 		}
 	}
 	{
-   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 	}
-   /*
-  
 
-   glLightfv(GL_LIGHT0, GL_POSITION, position0);
-   glLightfv(GL_LIGHT1, GL_POSITION, position1);
-   glLightfv(GL_LIGHT2, GL_POSITION, position2);
-   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-   glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
-   glLightfv(GL_LIGHT2, GL_AMBIENT, ambient);
-   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
-   glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse1);
-   glLightfv(GL_LIGHT2, GL_DIFFUSE, diffuse2);
-   glLightfv(GL_LIGHT0, GL_SPECULAR, diffuse0);
-   glLightfv(GL_LIGHT1, GL_SPECULAR, diffuse1);
-   glLightfv(GL_LIGHT2, GL_SPECULAR, diffuse2);
-   glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, spotDirection0);
-   glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spotDirection1);
-   glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, spotDirection2);
-   glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, cutoff);
-   glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, cutoff);
-   glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, cutoff);
-   glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, exponent);
-   glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, exponent);
-   glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, exponent);
-
-   glEnable(GL_LIGHT0);
-   glEnable(GL_LIGHT1);
-   glEnable(GL_LIGHT2);
-*/
 
    if (m_nLightShading == ID_LIGHT_SHADING_FLAT) {
 	 glShadeModel (GL_FLAT);
@@ -1689,43 +1871,34 @@ void COpenGLView::OnMaterialSetmaterialparameters()
 	}
 }
 
-void COpenGLView::loadTexture(string png) {
+void Hw1Object::loadTexture() {
 	PngWrapper p(png.c_str());
-	int w = p.GetWidth();
-	int h = p.GetHeight();
-	int c = p.GetNumChannels();
-	u_char* bmp = new u_char[w*h*c];
-	for (int _h = 0; _h < h; h++) {
-		for (int _w = 0; _w < w; w++) {
+	if (!p.ReadPng()) {
+		string msg = "Unable to read png file " + png;
+		AfxMessageBox(msg.c_str());
+		return;
+	}
+	w = p.GetWidth();
+	h = p.GetHeight();
+	c = p.GetNumChannels();
+	bmp = new unsigned char[w*h*c];
+	int curPixel = 0;
+	for (int _h = 0; _h < h; _h++) {
+		for (int _w = 0; _w < w; _w++) {
 			int pixel = p.GetValue(_w, _h);
 			if (1 == c) {
-				bmp[_w*_h + _w + 0] = pixel;
-				bmp[_w*_h + _w + 1] = pixel;
-				bmp[_w*_h + _w + 2] = pixel;
+				bmp[curPixel++] = pixel;
+				bmp[curPixel++] = pixel;
+				bmp[curPixel++] = pixel;
 				continue;
 			}
-			bmp[_w*_h + _w + 0] = GET_R(pixel);
-			bmp[_w*_h + _w + 1] = GET_R(pixel);
-			bmp[_w*_h + _w + 2] = GET_R(pixel);
+			bmp[curPixel++] = GET_R(pixel);
+			bmp[curPixel++] = GET_G(pixel);
+			bmp[curPixel++] = GET_B(pixel);
 			if (4 == c) {
-				bmp[_w*_h + _w + 3] = GET_A(pixel);
+				bmp[curPixel++] = GET_A(pixel);
 			}
 		}
 	}
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	GLenum format = (c == 4) ? GL_RGBA : GL_RGB;
-	glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, format, GL_UNSIGNED_BYTE, bmp);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glEnable(GL_TEXTURE_2D);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	delete bmp;
-
 }
-
-
-
-
 
