@@ -16,7 +16,7 @@
 #include "afxdlgs.h"
 
 #include <string>
-
+using std::string;
 
 class COpenGLView : public CView
 {
@@ -98,10 +98,32 @@ private:
 	bool m_bMayDraw; // For internal use - lock for drawing
 	bool m_bDrawBoundingBox; // $$ Should draw bounding box around each object
 
+	bool m_bUseModelColors; // %gui% should use the colors from the model instead of global values
+	bool m_bDrawWireframe;
+	bool m_bCullBackFaces; // %gui% cull back faces or not
+
+	// %gui%: Need dialog for this group:
+	bool m_bGenerateTexturesU; // %gui% Use generated textures instead of using given U coords
+	bool m_bGenerateTexturesV; // %gui% Use generated textures instead of using given V coords 
+	GLfloat texGenU[3]; // %gui% parameters for U generation. Only expose first 3.
+	GLfloat texGenV[3]; // %gui% parameters for V generation. Only expose first 3.
+	bool m_bGentexUScreenSpace; // %gui% Generate textures by screen coords or by object space coords
+	bool m_bGentexVScreenSpace; // %gui% Generate textures by screen coords or by object space coords
+
+	unsigned char* globalTexture; // %gui% that takes a file name, I have code that reads the file into this.
+
+	// %gui% or clicks - control texture transformation (rotation in U, V, scaling in U, V, translation in U, V)
+	int tex_rotation;
+	GLfloat tex_scaleU, tex_scaleV, tex_transU, tex_transV;
+
+	bool s_repeat, t_repeat; // %gui% choose for s, t if to repeat or clamp
+
+	bool m_bUseMipmaps; // %gui%
+
 	void drawAllObjects(); // hw1
 	void setProjection();
 	void setupLighting(bool firstCall);
-	void loadTexture(std::string tex);
+	void Init();
 
 // Overrides
 	// ClassWizard generated virtual function overrides

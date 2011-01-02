@@ -201,6 +201,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				Hw1Vertex* newVertex;
 				bool hasNormal = IP_HAS_NORMAL_VRTX(PVertex);
 				Hw1Normal normal;
+
 				double x = PVertex->Coord[0];
 				double y = PVertex->Coord[1];
 				double z = PVertex->Coord[2];
@@ -225,6 +226,7 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 					newVertex = new Hw1Vertex(x, y, z);
 				}
 				if (PVertex->Attr && PVertex->Attr->Type == IP_ATTR_UV) {
+					newVertex->hasUV = true;
 					newVertex->u = PVertex->Attr->U.UV[0];
 					newVertex->v = PVertex->Attr->U.UV[1];
 				}
