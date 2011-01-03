@@ -39,19 +39,19 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	float perspectiveDialog::getLeft() {
+	double perspectiveDialog::getLeft() {
 		return left;
 	}
-	float perspectiveDialog::getRight() {
+	double perspectiveDialog::getRight() {
 		return right;
 	}
-	float perspectiveDialog::getTop() {
+	double perspectiveDialog::getTop() {
 		return top;
 	}
-	float perspectiveDialog::getBottom() {
+	double perspectiveDialog::getBottom() {
 		return bottom;
 	}
-	float perspectiveDialog::getD() {
+	double perspectiveDialog::getD() {
 		return dVal;
 	}
 };

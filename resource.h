@@ -54,7 +54,9 @@
 #define IDC_SLIDER2                     1054
 #define IDC_SLIDER_ALPHA                1054
 #define IDC_EDIT_START                  1055
+#define IDC_COMBO_QUALITY               1056
 #define IDC_EDIT_R                      1057
+#define IDC_COMBO_MODE                  1057
 #define IDC_EDIT_D                      1058
 #define IDC_EDIT_B                      1059
 #define IDC_EDIT_T                      1060
@@ -104,14 +106,21 @@
 #define ID_MATERIAL_SETMATERIALPARAMETERS 32835
 #define ID_VIEW_TESSELLATION            32836
 #define ID_ACTION_SETFOGCOLOR           32837
+#define ID_ACTION_USEMODELCOLORS        32838
+#define ID_VIEW_CULLBACKFACES           32839
+#define ID_ACTION_TEXTURETRANSFORMATION 32849
+#define ID_MATERIAL_USEUTEXTURE         32850
+#define ID_MATERIAL_USEVTEXTURE         32851
+#define ID_Menu32852                    32852
+#define ID_MATERIAL_USEVTEXTURE32853    32853
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        151
-#define _APS_NEXT_COMMAND_VALUE         32838
-#define _APS_NEXT_CONTROL_VALUE         1056
+#define _APS_NEXT_RESOURCE_VALUE        152
+#define _APS_NEXT_COMMAND_VALUE         32854
+#define _APS_NEXT_CONTROL_VALUE         1057
 #define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif

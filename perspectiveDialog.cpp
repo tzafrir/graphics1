@@ -30,11 +30,11 @@ void perspectiveDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_T, top);
 	DDX_Text(pDX, IDC_EDIT_B, bottom);
 	DDX_Text(pDX, IDC_EDIT_D, dVal);
-	DDV_MinMaxFloat(pDX, left, PERS_MIN, PERS_MAX);
-	DDV_MinMaxFloat(pDX, right, PERS_MIN, PERS_MAX);
-	DDV_MinMaxFloat(pDX, top, PERS_MIN, PERS_MAX);
-	DDV_MinMaxFloat(pDX, bottom, PERS_MIN, PERS_MAX);
-	DDV_MinMaxFloat(pDX, dVal, PERS_MIN, INT_MAX);
+	DDV_MinMaxInt(pDX, (int)left, PERS_MIN, PERS_MAX);
+	DDV_MinMaxInt(pDX, (int)right, PERS_MIN, PERS_MAX);
+	DDV_MinMaxInt(pDX, (int)top, PERS_MIN, PERS_MAX);
+	DDV_MinMaxInt(pDX, (int)bottom, PERS_MIN, PERS_MAX);
+	DDV_MinMaxInt(pDX, (int)dVal, PERS_MIN, INT_MAX);
 }
 
 BOOL perspectiveDialog::OnInitDialog()

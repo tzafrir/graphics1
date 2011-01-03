@@ -14,10 +14,12 @@ public:
 	static const int FOG_COLOR_B_DEF = 1;
 	static const int FOG_COLOR_A_DEF = 1;
 
+	enum { HIGH_QUALITY = 0, FAST_RENDERING ,SW_CHOOSE};
+	enum { MODE_LINEAR = 0, MODE_EXP, MODE_EXP2};
 	static const int FOG_START_DEF = 1;
 	static const int FOG_END_DEF= 50;
-	static const int FOG_MODE_DEF = GL_LINEAR;	//{GL_EXP, GL_EXP2, GL_LINEAR}
-	static const int FOG_QUALITY_DEF = GL_NICEST; // GL_NICEST
+	static const int FOG_MODE_DEF = fogDialog::MODE_LINEAR ;	
+	static const int FOG_QUALITY_DEF = fogDialog::HIGH_QUALITY; 
 
 	fogDialog(	double valDens = DENSITY_DEF,
 				double valColR = FOG_COLOR_R_DEF,
@@ -33,6 +35,7 @@ public:
 
 // Dialog Data
 	enum { IDD = IDD_FOG_DLG };
+	
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -47,9 +50,9 @@ protected:
 	int mode ;
 	int quality;
 
-	DECLARE_MESSAGE_MAP()
-
 public:
+
+
 	int fogDialog::getDensity() {
 		return density;
 	}
@@ -77,4 +80,6 @@ public:
 	int fogDialog::getQuality() {
 		return quality;
 	}
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnBnClickedOk();
 };

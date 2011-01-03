@@ -34,11 +34,15 @@ void fogDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_END, end);
 	DDX_Slider(pDX, IDC_SLIDER_DENS , density);
 	DDX_Slider(pDX, IDC_SLIDER_ALPHA , alpha);
+	DDX_CBIndex(pDX, IDC_COMBO_QUALITY, quality);
+	DDX_CBIndex(pDX, IDC_COMBO_MODE, mode);
 }
 
-
 BEGIN_MESSAGE_MAP(fogDialog, CDialog)
+	ON_BN_CLICKED(IDOK, &fogDialog::OnBnClickedOk)
 END_MESSAGE_MAP()
 
-
-// fogDialog message handlers
+void fogDialog::OnBnClickedOk()
+{
+	OnOK();
+}

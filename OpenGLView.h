@@ -34,6 +34,7 @@ public:
 private:
 	int m_nAxis;				// Axis of Action, X Y or Z
 	int m_nAction;				// Rotate, Translate, Scale
+	int m_bTransformTexture;	// transformations transform the texture only
 	int m_nView;				// Orthographic, perspective
 	bool m_bIsPerspective;			// is the view perspective
 	
@@ -61,9 +62,9 @@ private:
 	int activeView;					// hw1
 	double m_lNormalScale;			// hw1 $$: Larger -> larger normals
 	bool m_bDrawVertexNormals;		// hw1
-	double m_lCenterX;
-	double m_lCenterY;
-	double m_lCenterZ;
+	GLfloat m_lCenterX;
+	GLfloat m_lCenterY;
+	GLfloat m_lCenterZ;
 	double m_lColorR;	// $$$$$
 	double m_lColorG;	// $ User chosen color
 	double m_lColorB;	// $$$$$
@@ -79,14 +80,14 @@ private:
 	double m_activeColorB;	// $$$$$
 	bool m_bIsActiveView;
 
-	double m_lTotalSize; // 0.5 Diagonal of the bounding box
-	double m_lZoomRatio; // Amount of zoom in both perspective/ortho mode (managed by Scale() )
+	GLfloat m_lTotalSize; // 0.5 Diagonal of the bounding box
+	GLfloat m_lZoomRatio; // Amount of zoom in both perspective/ortho mode (managed by Scale() )
 	
-	double m_lPerspectiveRight; 
-	double m_lPerspectiveLeft;
-	double m_lPerspectiveTop;
-	double m_lPerspectiveBottom;
-	double m_lPerspectiveDVal;
+	GLfloat m_lPerspectiveRight; 
+	GLfloat m_lPerspectiveLeft;
+	GLfloat m_lPerspectiveTop;
+	GLfloat m_lPerspectiveBottom;
+	GLfloat m_lPerspectiveDVal;
 
 	bool m_fogEnabled ;
 	GLfloat density;// = 0.3; //set the density to 0.3 which is acctually quite thick
@@ -107,15 +108,15 @@ private:
 	// %gui%: Need dialog for this group:
 	bool m_bGenerateTexturesU; // %gui% Use generated textures instead of using given U coords
 	bool m_bGenerateTexturesV; // %gui% Use generated textures instead of using given V coords 
-	GLfloat texGenU[3]; // %gui% parameters for U generation. Only expose first 3.
-	GLfloat texGenV[3]; // %gui% parameters for V generation. Only expose first 3.
+	GLfloat texGenU[4]; // %gui% parameters for U generation. Only expose first 3.
+	GLfloat texGenV[4]; // %gui% parameters for V generation. Only expose first 3.
 	bool m_bGentexUScreenSpace; // %gui% Generate textures by screen coords or by object space coords
 	bool m_bGentexVScreenSpace; // %gui% Generate textures by screen coords or by object space coords
 
 	unsigned char* globalTexture; // %gui% that takes a file name, I have code that reads the file into this.
 
 	// %gui% or clicks - control texture transformation (rotation in U, V, scaling in U, V, translation in U, V)
-	int tex_rotation;
+	GLfloat tex_rotation;
 	GLfloat tex_scaleU, tex_scaleV, tex_transU, tex_transV;
 
 	bool s_repeat, t_repeat; // %gui% choose for s, t if to repeat or clamp
@@ -162,7 +163,9 @@ protected:
 	BOOL SetupPixelFormat(PIXELFORMATDESCRIPTOR* pPFD = 0); // the '= 0' was added.
 	BOOL SetupViewingFrustum(void);
 	BOOL SetupViewingOrthoConstAspect(void);
-	void COpenGLView::EnableFog (void);
+	void EnableFog (void);
+	int fogQulityConvert(int fogQuality);
+	int fogModeConvert(int fogMode);
 
 	virtual void RenderScene();
 
@@ -260,6 +263,16 @@ public:
 	afx_msg void OnViewTessellation();
 	afx_msg void OnUpdateViewTessellation(CCmdUI *pCmdUI);
 	afx_msg void OnActionSetfogcolor();
+	afx_msg void OnActionUsemodelcolors();
+	afx_msg void OnUpdateActionUsemodelcolors(CCmdUI *pCmdUI);
+	afx_msg void OnViewCullbackfaces();
+	afx_msg void OnUpdateViewCullbackfaces(CCmdUI *pCmdUI);
+	afx_msg void OnActionTexturetransformation();
+	afx_msg void OnUpdateActionTexturetransformation(CCmdUI *pCmdUI);
+	afx_msg void OnMaterialUseutexture();
+	afx_msg void OnUpdateMaterialUseutexture(CCmdUI *pCmdUI);
+	afx_msg void OnMaterialUsevtexture();
+	afx_msg void OnUpdateMaterialUsevtexture(CCmdUI *pCmdUI);
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()

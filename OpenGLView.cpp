@@ -137,6 +137,16 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_COMMAND(ID_VIEW_TESSELLATION, &COpenGLView::OnViewTessellation)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_TESSELLATION, &COpenGLView::OnUpdateViewTessellation)
 	ON_COMMAND(ID_ACTION_SETFOGCOLOR, &COpenGLView::OnActionSetfogcolor)
+	ON_COMMAND(ID_ACTION_USEMODELCOLORS, &COpenGLView::OnActionUsemodelcolors)
+	ON_UPDATE_COMMAND_UI(ID_ACTION_USEMODELCOLORS, &COpenGLView::OnUpdateActionUsemodelcolors)
+	ON_COMMAND(ID_VIEW_CULLBACKFACES, &COpenGLView::OnViewCullbackfaces)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_CULLBACKFACES, &COpenGLView::OnUpdateViewCullbackfaces)
+	ON_COMMAND(ID_ACTION_TEXTURETRANSFORMATION, &COpenGLView::OnActionTexturetransformation)
+	ON_UPDATE_COMMAND_UI(ID_ACTION_TEXTURETRANSFORMATION, &COpenGLView::OnUpdateActionTexturetransformation)
+	ON_COMMAND(ID_MATERIAL_USEUTEXTURE, &COpenGLView::OnMaterialUseutexture)
+	ON_UPDATE_COMMAND_UI(ID_MATERIAL_USEUTEXTURE, &COpenGLView::OnUpdateMaterialUseutexture)
+	ON_COMMAND(ID_MATERIAL_USEVTEXTURE, &COpenGLView::OnMaterialUsevtexture)
+	ON_UPDATE_COMMAND_UI(ID_MATERIAL_USEVTEXTURE, &COpenGLView::OnUpdateMaterialUsevtexture)
 END_MESSAGE_MAP()
 
 
@@ -162,6 +172,7 @@ void COpenGLView::Init() {
 	// Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
+	m_bTransformTexture = false;
 	m_nView = ID_VIEW_ORTHOGRAPHIC;	
 	m_bIsPerspective = false;
 
@@ -175,7 +186,7 @@ void COpenGLView::Init() {
 	//init the first light to be enabled
 	m_lights[LIGHT_ID_1].enabled=true;
 
-	m_lZoomRatio = zoomRatioDefault; // hw1 zoom ratio
+	m_lZoomRatio = (GLfloat)zoomRatioDefault; // hw1 zoom ratio
 	m_lPerspectiveLeft = m_lPerspectiveRight = 
 		m_lPerspectiveTop = m_lPerspectiveBottom = perspectiveDialog::PERS_DEFAULT;
 	lastClicked.SetPoint(0,0);	//hw1
@@ -190,6 +201,7 @@ void COpenGLView::Init() {
 	fogStart = fogDialog::FOG_START_DEF;
 	fogEnd = fogDialog::FOG_END_DEF;
 	fogMode = fogDialog::FOG_MODE_DEF;
+	fogQuality = fogDialog::FOG_QUALITY_DEF;
 			// FOG PARAMETERS END
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
@@ -215,7 +227,7 @@ void COpenGLView::Init() {
 	multipleObjects = false;
 	numViews = 1;
 	numObjects = 1;
-	numViewsRows = numViewsCol = sqrt(double(numViews));
+	numViewsRows = numViewsCol = (int)sqrt(double(numViews));
 	activeView = 0;
 	for (int i=0 ; i<MAX_VIEWS ; i++){
 		for (int k=0 ; k<16 ; k++){
@@ -254,7 +266,7 @@ void COpenGLView::Init() {
 	s_repeat = true;
 	t_repeat = true;
 
-	m_bUseMipmaps = true;
+	m_bUseMipmaps = false;
 }
 
 COpenGLView::~COpenGLView()
@@ -517,16 +529,34 @@ void COpenGLView::EnableFog (void) {
 
 	glFogf (GL_FOG_END,fogEnd);
 
-	glFogi (GL_FOG_MODE, fogMode); //set the fog mode to GL_EXP2
+	glFogi (GL_FOG_MODE, fogModeConvert(fogMode)); //set the fog mode to GL_EXP2
 
 	glFogfv (GL_FOG_COLOR, fogColor); //set the fog color to our color chosen above
 
 	glFogf (GL_FOG_DENSITY, density/100); //set the density to the value above
-
-	glHint (GL_FOG_HINT, GL_NICEST); // set the fog to look the	nicest, may slow down on older cards
-
+	
+	glHint (GL_FOG_HINT, fogQulityConvert(fogQuality)); // GL_NICEST, GL_FASTEST, GL_DONT_CARE
 }
 
+int COpenGLView::fogQulityConvert(int fogQuality){
+	
+	switch (fogQuality){
+		case fogDialog::HIGH_QUALITY:	return GL_NICEST;
+		case fogDialog::FAST_RENDERING:	return GL_FASTEST;
+		case fogDialog::SW_CHOOSE:		return GL_DONT_CARE;
+	}
+	return -1;
+}
+
+int COpenGLView::fogModeConvert(int fogMode){
+	
+	switch (fogMode){
+		case fogDialog::MODE_LINEAR:return GL_LINEAR;
+		case fogDialog::MODE_EXP:	return GL_EXP;
+		case fogDialog::MODE_EXP2:	return GL_EXP2;
+	}
+	return -1;
+}
 
 
 BOOL COpenGLView::OnEraseBkgnd(CDC* pDC) 
@@ -558,7 +588,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 	setupLighting(true);
 	glPushMatrix();
 	if (m_backChoseColor){
-		glClearColor(m_backColorR/255, m_backColorG/255, m_backColorB/255, 0.0);
+		glClearColor((GLclampf)m_backColorR/255, (GLclampf)m_backColorG/255, (GLclampf)m_backColorB/255, 0.0);
 	}else{
 		glClearColor(0.0, 0.0, 0.0, 0.0);
 	}
@@ -582,7 +612,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 	if (m_bGenerateTexturesU) {
 		int mode1 = m_bGentexUScreenSpace ? GL_EYE_LINEAR : GL_OBJECT_LINEAR;
 		int mode2 = m_bGentexUScreenSpace ? GL_EYE_PLANE : GL_OBJECT_PLANE;
-		glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, mode1);
+		glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, (GLfloat)mode1);
 		glTexGenfv(GL_S, mode2, texGenU);
 		glEnable(GL_TEXTURE_GEN_S);
 	} else {
@@ -592,7 +622,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 	if (m_bGenerateTexturesV) {
 		int mode1 = m_bGentexVScreenSpace ? GL_EYE_LINEAR : GL_OBJECT_LINEAR;
 		int mode2 = m_bGentexVScreenSpace ? GL_EYE_PLANE : GL_OBJECT_PLANE;
-		glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, mode1);
+		glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, (GLfloat)mode1);
 		glTexGenfv(GL_T, mode2, texGenV);
 		glEnable(GL_TEXTURE_GEN_T);
 	} else {
@@ -601,8 +631,8 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 	int s_mode = s_repeat ? GL_REPEAT : GL_CLAMP;
 	int t_mode = t_repeat ? GL_REPEAT : GL_CLAMP;
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, s_mode);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, t_mode);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (GLfloat)s_mode);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (GLfloat)t_mode);
 
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -621,9 +651,9 @@ void COpenGLView::OnDraw(CDC* pDC)
 					glTranslatef(0.0, 0.0, -m_lPerspectiveDVal*m_lTotalSize);	//test
 				}
 				if (multipleObjects){
-					float scale = sqrt(m_lTotalSize)/2/numObjects;
+					GLfloat scale = (GLfloat)sqrt(m_lTotalSize)/2/numObjects;
 					glScalef(scale, scale, scale);
-					float trans = (k-numObjects/2+0.5)*0.5*m_lTotalSize;
+					GLfloat trans = (GLfloat)((k-numObjects/2+0.5)*0.5*m_lTotalSize);
 					glTranslatef(trans, trans, trans);
 				}
 				
@@ -636,7 +666,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 										m_WindowWidth/numViewsCol, m_WindowHeight/numViewsRows);
 				}
 				// scale acording to the size of the object
-				float scale = 3.0/m_lTotalSize;
+				float scale = (GLfloat)3.0/m_lTotalSize;
 				glScalef(scale, scale, scale);
 				glTranslatef(-m_lCenterX, -m_lCenterY, -m_lCenterZ);
 				setupLighting(false);
@@ -696,7 +726,7 @@ void COpenGLView::draw_axis()
 	// Draw Axis x
 	glPushMatrix();
 	for(double i = 0 ; i <= NUM_OBJ ; i++){
-		glColor3f(1-i/NUM_OBJ, 0, 0+i/NUM_OBJ);
+		glColor3f((GLfloat)(1-i/NUM_OBJ), 0, (GLfloat)(i/NUM_OBJ));
 		glBegin(GL_TRIANGLES);
 			glVertex3d(-0.1,0,0);
 			glVertex3d(   1,0,0);
@@ -788,15 +818,15 @@ void COpenGLView::OnFileLoad()
 				maxZ = max(maxZ, o->getMaxZ());
 			}
 		}
-		m_lCenterX = (minX + maxX) / 2.0;
-		m_lCenterY = (minY + maxY) / 2.0;
-		m_lCenterZ = (minZ + maxZ) / 2.0;
+		m_lCenterX = (GLfloat)((minX + maxX) / 2.0);
+		m_lCenterY = (GLfloat)((minY + maxY) / 2.0);
+		m_lCenterZ = (GLfloat)((minZ + maxZ) / 2.0);
 		
 		// Calculate absolute size:
 		double x = m_lCenterX - minX;
 		double y = m_lCenterY - minY;
 		double z = m_lCenterZ - minZ;
-		m_lTotalSize = sqrt(x*x + y*y + z*z);
+		m_lTotalSize = (GLfloat)sqrt(x*x + y*y + z*z);
 		mouseSensitivity = sensitivityDialog::SENS_DEFAULT;
 		m_bMayDraw = true;
 		
@@ -948,7 +978,7 @@ void COpenGLView::OnMenu()
 	}
 	
 	Hw1Polygon::normalScale = Hw1Polygon::normalScaleDefault;
-	m_lZoomRatio = zoomRatioDefault;
+	m_lZoomRatio = (GLfloat)zoomRatioDefault;
 	m_lPerspectiveLeft = 
 		m_lPerspectiveRight = 
 			m_lPerspectiveTop = 
@@ -1099,13 +1129,9 @@ double Hw1Polygon::normalScaleDefault = 1.0;
 double Hw1Polygon::normalScale = 1.0;
 double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
-<<<<<<< HEAD
 void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
-					 bool hasColor, double cR, double cG, double cB) {
-=======
-void Hw1Object::draw(bool shouldDrawBoundingBox, bool hasColor, double cR, double cG, double cB,
-		unsigned char *tex, bool hasMipmaps) {
->>>>>>> tzafrir
+						bool hasColor, double cR, double cG, double cB,
+							unsigned char *tex, bool hasMipmaps) {
 	if (hasColor) {
 		// color is an integer in 0-255 range. glColor3fparams are 0.0-1.0 doubles
 		glColor3f(cR/255, cG/255, cB/255);
@@ -1299,68 +1325,81 @@ void COpenGLView::Scale(float scaleX, float scaleY, float scaleZ){
 		return;
 	}*/
 	for (int i=0 ; i<numViews ; i++){
-		glPushMatrix();
-		
-		for (int k=0 ; k<numObjects ; k++){
-			if (multipleObjects){
-				glLoadMatrixf(viewMatrix[k]);
-			}else{
-				glLoadMatrixf(viewMatrix[i]);
+		if (m_bTransformTexture){
+			tex_scaleU *= scaleX;
+			tex_scaleV *= scaleY;
+		}else{
+			glPushMatrix();
+			
+			for (int k=0 ; k<numObjects ; k++){
+				if (multipleObjects){
+					glLoadMatrixf(viewMatrix[k]);
+				}else{
+					glLoadMatrixf(viewMatrix[i]);
+				}
+				if ((nSpace == ID_SPACE_SCREEN)&&(((activeView == i)&&(multipleViews))||(activeView == k))){
+					GLfloat matrix[16];
+							
+					glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+					glLoadIdentity();
+					glScalef(scaleX , scaleY, scaleZ);
+					glMultMatrixf(matrix);
+				}else if (nSpace == ID_SPACE_OBJECT){
+					glScalef(scaleX , scaleY, scaleZ);
+				}
+				if (multipleObjects){
+					glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[k]);
+				}else{
+					glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+				}
 			}
-			if ((nSpace == ID_SPACE_SCREEN)&&(((activeView == i)&&(multipleViews))||(activeView == k))){
-				GLfloat matrix[16];
-						
-				glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-				glLoadIdentity();
-				glScalef(scaleX , scaleY, scaleZ);
-				glMultMatrixf(matrix);
-			}else if (nSpace == ID_SPACE_OBJECT){
-				glScalef(scaleX , scaleY, scaleZ);
-			}
-			if (multipleObjects){
-				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[k]);
-			}else{
-				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
-			}
+			glPopMatrix();
 		}
-		glPopMatrix();
 	}
 }
 
 
 void COpenGLView::Rotate(float angle)
 {
-	for (int i=0 ; i<numViews ; i++){
-		glPushMatrix();
-		for (int k=0 ; k<numObjects ; k++){
-			if (multipleObjects){
-				glLoadMatrixf(viewMatrix[k]);
-			}else{
-				glLoadMatrixf(viewMatrix[i]);
+	if (m_bTransformTexture){
+		tex_rotation = (int)(tex_rotation + angle) % 360;
+	}else{
+		for (int i=0 ; i<numViews ; i++){
+			glPushMatrix();
+			for (int k=0 ; k<numObjects ; k++){
+				if (multipleObjects){
+					glLoadMatrixf(viewMatrix[k]);
+				}else{
+					glLoadMatrixf(viewMatrix[i]);
+				}
+				if ((nSpace == ID_SPACE_SCREEN)&&(((activeView == i)&&(multipleViews))||(activeView == k))){ // 
+					GLfloat matrix[16];
+							
+					glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+					glLoadIdentity();
+					glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+					glMultMatrixf(matrix);
+				}else if (nSpace == ID_SPACE_OBJECT){
+					glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
+				}
+				if (multipleObjects){
+					glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[k]);
+				}else{
+					glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
+				}
 			}
-			if ((nSpace == ID_SPACE_SCREEN)&&(((activeView == i)&&(multipleViews))||(activeView == k))){ // 
-				GLfloat matrix[16];
-						
-				glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-				glLoadIdentity();
-				glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
-				glMultMatrixf(matrix);
-			}else if (nSpace == ID_SPACE_OBJECT){
-				glRotatef( angle, (m_nAxis == ID_AXIS_X)*1.0f, (m_nAxis == ID_AXIS_Y)*1.0f, (m_nAxis == ID_AXIS_Z)*1.0f );
-			}
-			if (multipleObjects){
-				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[k]);
-			}else{
-				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
-			}
+			glPopMatrix();
 		}
-		glPopMatrix();
 	}
 }
 
 void COpenGLView::Translate(int x, int y)
 {	
-	for (int i=0 ; i<numViews ; i++){
+	if (m_bTransformTexture){
+		tex_transU += (double)x/10;
+		tex_transV += (double)y/10;
+	}else{
+		for (int i=0 ; i<numViews ; i++){
 		float size;
 		if(m_bIsPerspective){
 			size = 3.666;
@@ -1397,8 +1436,8 @@ void COpenGLView::Translate(int x, int y)
 				glGetFloatv(GL_MODELVIEW_MATRIX, viewMatrix[i]);
 			}
 		}
-		
 		glPopMatrix();
+		}
 	}
 }
 
@@ -1751,6 +1790,8 @@ void COpenGLView::setupLighting(bool firstCall) {
 	if (m_bUseModelColors) {
 		glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
 		glEnable(GL_COLOR_MATERIAL);
+	} else {
+		glDisable(GL_COLOR_MATERIAL);
 	}
 	
 	{
@@ -1844,7 +1885,7 @@ void COpenGLView::OnUpdateViewTessellation(CCmdUI *pCmdUI)
 void COpenGLView::OnViewSetfogparameters()
 {
 	fogDialog dlg(	density, fogColor[0], fogColor[1] ,fogColor[2] , fogColor[3] ,
-					fogStart , fogEnd , fogMode);
+				fogStart , fogEnd , fogMode, fogQuality);
 
 	if (dlg.DoModal() == IDOK) {
 		density = dlg.getDensity();
@@ -1855,6 +1896,7 @@ void COpenGLView::OnViewSetfogparameters()
 		fogStart = dlg.getStart();
 		fogEnd = dlg.getEnd();
 		fogMode = dlg.getMode();
+		fogQuality = dlg.getQuality();
 		Invalidate();
 	}
 }
@@ -1902,3 +1944,52 @@ void Hw1Object::loadTexture() {
 	}
 }
 
+void COpenGLView::OnActionUsemodelcolors()
+{
+	m_bUseModelColors = (!m_bUseModelColors);
+}
+
+void COpenGLView::OnUpdateActionUsemodelcolors(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bUseModelColors == true );
+}
+
+void COpenGLView::OnViewCullbackfaces()
+{
+	m_bCullBackFaces = (!m_bCullBackFaces);
+}
+
+void COpenGLView::OnUpdateViewCullbackfaces(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bUseModelColors == true );
+}
+
+void COpenGLView::OnActionTexturetransformation()
+{
+	m_bTransformTexture = (!m_bTransformTexture);
+}
+
+void COpenGLView::OnUpdateActionTexturetransformation(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bTransformTexture == true );
+}
+
+void COpenGLView::OnMaterialUseutexture()
+{
+	m_bGenerateTexturesU = (!m_bGenerateTexturesU);
+}
+
+void COpenGLView::OnUpdateMaterialUseutexture(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bGenerateTexturesU == true );
+}
+
+void COpenGLView::OnMaterialUsevtexture()
+{
+	m_bGenerateTexturesV = (!m_bGenerateTexturesV);
+}
+
+void COpenGLView::OnUpdateMaterialUsevtexture(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bGenerateTexturesV == true );
+}

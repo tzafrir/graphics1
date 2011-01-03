@@ -53,6 +53,7 @@ BEGIN
     BUTTON      ID_ACTION_ROTATE
     BUTTON      ID_ACTION_TRANSLATE
     BUTTON      ID_ACTION_SCALE
+    BUTTON      ID_ACTION_TEXTURETRANSFORMATION
     SEPARATOR
     BUTTON      ID_AXIS_X
     BUTTON      ID_AXIS_Y
@@ -83,6 +84,7 @@ BEGIN
         MENUITEM "Bounding Box",                ID_VIEW_BOUNDING_BOX
         MENUITEM "Wireframe",                   ID_VIEW_WIREFRAME
         MENUITEM "Tessellation",                ID_VIEW_TESSELLATION
+        MENUITEM "CullBack Faces",              ID_VIEW_CULLBACKFACES
         MENUITEM SEPARATOR
         MENUITEM "Multiple Views...",           ID_VIEW_MULTIPLEVIEWS
         MENUITEM "Multiple Objects",            ID_VIEW_MULTIPLEOBJECTS
@@ -106,6 +108,7 @@ BEGIN
         MENUITEM "&Rotate",                     ID_ACTION_ROTATE
         MENUITEM "&Translate",                  ID_ACTION_TRANSLATE
         MENUITEM "&Scale",                      ID_ACTION_SCALE
+        MENUITEM "Texture Transformation",      ID_ACTION_TEXTURETRANSFORMATION
         MENUITEM SEPARATOR
         MENUITEM "Enable Fog",                  ID_VIEW_ENABLEFOG
         MENUITEM "Set Fog Color...",            ID_ACTION_SETFOGCOLOR
@@ -113,6 +116,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Set Object Color...",         ID_ACTION_SETCOLOR
         MENUITEM "Set Background Color...",     ID_ACTION_SETBACKGROUNDCOLOR
+        MENUITEM "Use Model Colors",            ID_ACTION_USEMODELCOLORS
     END
     POPUP "A&xis"
     BEGIN
@@ -134,13 +138,16 @@ BEGIN
         END
         MENUITEM "&Parameters...",              ID_LIGHT_CONSTANTS
     END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&About OpenGL...",            ID_APP_ABOUT
-    END
     POPUP "Material"
     BEGIN
         MENUITEM "Set Material Parameters...",  ID_MATERIAL_SETMATERIALPARAMETERS
+        MENUITEM SEPARATOR
+        MENUITEM "Use U Texture",               ID_MATERIAL_USEUTEXTURE
+        MENUITEM "Use V Texture",               ID_MATERIAL_USEVTEXTURE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About OpenGL...",            ID_APP_ABOUT
     END
 END
 
@@ -285,21 +292,25 @@ BEGIN
     EDITTEXT        IDC_EDIT_T,57,33,28,13,ES_CENTER | ES_AUTOHSCROLL
 END
 
-IDD_FOG_DLG DIALOGEX 0, 0, 175, 90
+IDD_FOG_DLG DIALOGEX 0, 0, 175, 132
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,118,70,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,62,70,50,14
+    DEFPUSHBUTTON   "OK",IDOK,118,111,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,62,111,50,14
     LTEXT           "Density",IDC_STATIC,7,10,66,12
-    LTEXT           "Start distance",IDC_STATIC,7,49,48,12
-    LTEXT           "End distance",IDC_STATIC,95,49,43,12
+    LTEXT           "Start distance",IDC_STATIC,7,90,48,12
+    LTEXT           "End distance",IDC_STATIC,95,90,43,12
     CONTROL         "",IDC_SLIDER_DENS,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | TBS_TOOLTIPS | WS_TABSTOP,38,7,130,14
     CONTROL         "",IDC_SLIDER_ALPHA,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | TBS_TOOLTIPS | WS_TABSTOP,38,23,129,16
-    EDITTEXT        IDC_EDIT_START,56,48,26,13,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT_END,137,48,26,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_START,56,89,26,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_END,137,89,26,13,ES_AUTOHSCROLL
     LTEXT           "Alpha",IDC_STATIC,7,28,22,12
+    LTEXT           "Quality",IDC_STATIC,7,45,22,12
+    COMBOBOX        IDC_COMBO_QUALITY,50,42,109,58,CBS_DROPDOWN | WS_TABSTOP
+    LTEXT           "Fog Mode",IDC_STATIC,8,64,42,12
+    COMBOBOX        IDC_COMBO_MODE,50,60,109,58,CBS_DROPDOWN | WS_TABSTOP
 END
 
 
@@ -394,7 +405,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 168
         TOPMARGIN, 7
-        BOTTOMMARGIN, 83
+        BOTTOMMARGIN, 125
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -427,6 +438,24 @@ BEGIN
 0x8001, 0x0000, 0x0000, 0x0000, 0x0003, 0x0000, 0x0002, 0x8001, 0x0001, 
 0x0000, 0x0000, 0x0c02, 0x0800, 0x0000, 0x7300, 0x0026, 0x3d00, 0x0004, 
 "\000" 
+    0
+END
+
+IDD_FOG_DLG DLGINIT
+BEGIN
+    IDC_COMBO_QUALITY, 0x403, 13, 0
+0x6948, 0x6867, 0x5120, 0x6175, 0x696c, 0x7974, "\000" 
+    IDC_COMBO_QUALITY, 0x403, 15, 0
+0x6146, 0x7473, 0x5220, 0x6e65, 0x6564, 0x6972, 0x676e, "\000" 
+    IDC_COMBO_QUALITY, 0x403, 19, 0
+0x654c, 0x2074, 0x7270, 0x676f, 0x6572, 0x206d, 0x6863, 0x6f6f, 0x6573, 
+"\000" 
+    IDC_COMBO_MODE, 0x403, 7, 0
+0x694c, 0x656e, 0x7261, "\000" 
+    IDC_COMBO_MODE, 0x403, 12, 0
+0x7845, 0x6f70, 0x656e, 0x636e, 0x6169, 0x006c, 
+    IDC_COMBO_MODE, 0x403, 14, 0
+0x7845, 0x6f70, 0x656e, 0x636e, 0x6169, 0x206c, 0x0032, 
     0
 END
 
