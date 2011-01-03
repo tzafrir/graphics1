@@ -176,6 +176,7 @@ class Hw1Object {
 public:
 	int name;
 	bool hasTex;
+	bool hasMipmaps;
 	string png;
 	~Hw1Object() {
 	  for (vector<Hw1Polygon*>::iterator it = polygons->begin();

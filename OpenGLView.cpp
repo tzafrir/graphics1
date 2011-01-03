@@ -56,7 +56,8 @@ extern void clearHw1Objects();
 // ugly globals;
 
 int g_w, g_h, g_c;
-
+int selectedObject = -1;
+int findSelectedObject(GLint hits, GLuint buffer[]);
 /////////////////////////////////////////////////////////////////////////////
 // COpenGLView
 
@@ -266,7 +267,11 @@ void COpenGLView::Init() {
 	s_repeat = true;
 	t_repeat = true;
 
-	m_bUseMipmaps = false;
+	m_bUseMipmaps = true;
+	m_bUserCanSelectAnObject = false;
+	m_bObjectWasSelected = true;
+	selectX = 0;
+	selectY = 0;
 }
 
 COpenGLView::~COpenGLView()
@@ -451,7 +456,7 @@ void COpenGLView::OnSize(UINT nType, int cx, int cy)
 	// get the aspect ratio and set the viewport
 	//SetupViewingFrustum( );
 	//SetupViewingOrthoConstAspect();
-	setProjection();
+	
 
 	// now select the modelview matrix and clear it
 	// this is the mode we do most of our calculations in
@@ -642,6 +647,25 @@ void COpenGLView::OnDraw(CDC* pDC)
 	glTranslatef(tex_transU, tex_transV, 0.0);
 	glMatrixMode(GL_MODELVIEW);
 
+	// Selection - before rendering:
+	static const int SELECT_BUF_SIZE = 1024;
+	GLuint selected[SELECT_BUF_SIZE];
+
+	if (m_bObjectWasSelected) {
+		glSelectBuffer(SELECT_BUF_SIZE, selected);
+		glRenderMode(GL_SELECT);
+		glInitNames();
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		static const double radius = 5.0;
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		gluPickMatrix(selectX, selectY, radius, radius, viewport);
+		setProjection();
+		glMatrixMode(GL_MODELVIEW);
+	}
+
 	for (int  i=0; i<numViewsCol ;i++){
 		for (int j=0 ; j<numViewsRows ; j++){
 			for(int k=0 ; k<numObjects ; k++){
@@ -676,6 +700,18 @@ void COpenGLView::OnDraw(CDC* pDC)
 	}
 
 	glPopMatrix();
+
+	if (m_bObjectWasSelected) {
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glFlush();
+
+		int hits = glRenderMode(GL_RENDER);
+		selectedObject = findSelectedObject(hits, selected);
+		m_bObjectWasSelected = false;
+		Invalidate();
+	}
 
 	glMatrixMode(GL_TEXTURE);
 	glPopMatrix();
@@ -830,7 +866,7 @@ void COpenGLView::OnFileLoad()
 		mouseSensitivity = sensitivityDialog::SENS_DEFAULT;
 		m_bMayDraw = true;
 		
-		
+		/*
 		PngWrapper p("03.png");
 		if (!p.ReadPng()) {
 			string msg = "Unable to read png file";
@@ -860,7 +896,7 @@ void COpenGLView::OnFileLoad()
 				}
 			}
 		}
-		
+		*/
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	} 
@@ -1132,7 +1168,9 @@ double Hw1Polygon::sizeNormalizeFactor = 0.2;
 void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 						bool hasColor, double cR, double cG, double cB,
 							unsigned char *tex, bool hasMipmaps) {
-	if (hasColor) {
+	if (name == selectedObject) {
+		glColor3f(1.0, 1.0, 1.0); // TODO: Use a different method for selection
+	} else if (hasColor) {
 		// color is an integer in 0-255 range. glColor3fparams are 0.0-1.0 doubles
 		glColor3f(cR/255, cG/255, cB/255);
 	} else {
@@ -1166,9 +1204,8 @@ void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 		}
 		glEnable(GL_TEXTURE_2D);
 		if (hasMipmaps) {
-			glDepthFunc(GL_LEQUAL);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		} else {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1176,11 +1213,13 @@ void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 	} else {
 		glDisable(GL_TEXTURE_2D);
 	}
+	glPushName(name);
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			it != polygons->end();
 			++it) {
 		(*it)->draw(useTessellation);
 	}
+	glPopName();
 	if (shouldDrawBoundingBox) {
 		drawBoundingBox();
 	}
@@ -1602,7 +1641,9 @@ void COpenGLView::OnLButtonDown(UINT nFlags, CPoint point)
 		}
 		activeView = i*numViewsRows+(numViewsRows-j-1);
 	}
-
+	m_bObjectWasSelected = true;
+	selectX = point.x;
+	selectY = (m_WindowHeight - point.y);
 	CView::OnLButtonDown(nFlags, point);
 }
 
@@ -1779,6 +1820,24 @@ inline double _d256(int color) {
 }
 
 void COpenGLView::setupLighting(bool firstCall) {
+	// Material properties
+	if (m_bUseModelColors) {
+		glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+		glEnable(GL_COLOR_MATERIAL);
+	} else {
+		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+		glDisable(GL_COLOR_MATERIAL);
+		GLfloat ambient[] = { m_lMaterialAmbient, m_lMaterialAmbient, m_lMaterialAmbient, 1.0 };
+		GLfloat diffuse[] = { m_lMaterialDiffuse, m_lMaterialDiffuse, m_lMaterialDiffuse, 1.0 };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+	}
+	{
+		GLfloat specular[] = { m_lMaterialSpecular, m_lMaterialSpecular, m_lMaterialSpecular, 1.0 };
+		GLfloat shininess[] = { m_nMaterialShininessFactor };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+	}
 	// Fullscene ambient
 	{
 	LightParams &l = m_ambientLight;
@@ -1786,20 +1845,6 @@ void COpenGLView::setupLighting(bool firstCall) {
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, fs_ambient);
 	}
 
-	// Material properties
-	if (m_bUseModelColors) {
-		glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-		glEnable(GL_COLOR_MATERIAL);
-	} else {
-		glDisable(GL_COLOR_MATERIAL);
-	}
-	
-	{
-		GLfloat specular[] = { m_lMaterialSpecular, m_lMaterialSpecular, m_lMaterialSpecular, 1.0 };
-		GLfloat shininess[] = { m_nMaterialShininessFactor };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-	}
    static const double cutoff = 60.0;
    static const double exponent = 2.0;
 
@@ -1992,4 +2037,22 @@ void COpenGLView::OnMaterialUsevtexture()
 void COpenGLView::OnUpdateMaterialUsevtexture(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bGenerateTexturesV == true );
+}
+
+int findSelectedObject(GLint hits, GLuint buffer[]) {
+   GLuint names, *ptr, minZ, *ptrNames = NULL;
+   if (hits == 0) return -1;
+   ptr = (GLuint *)buffer;
+   minZ = 0xffffffff;
+   for (int i = 0; i < hits; i++) {	
+      names = *ptr;
+	  ptr++;
+	  if (*ptr < minZ) {
+		  minZ = *ptr;
+		  ptrNames = ptr+2;
+	  }
+	  ptr += names+2;
+	}
+  // Assuming only one name.
+  return (int)*ptrNames;
 }

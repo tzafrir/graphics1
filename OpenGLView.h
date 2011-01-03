@@ -34,7 +34,7 @@ public:
 private:
 	int m_nAxis;				// Axis of Action, X Y or Z
 	int m_nAction;				// Rotate, Translate, Scale
-	int m_bTransformTexture;	// transformations transform the texture only
+	bool m_bTransformTexture;	// transformations transform the texture only
 	int m_nView;				// Orthographic, perspective
 	bool m_bIsPerspective;			// is the view perspective
 	
@@ -122,6 +122,12 @@ private:
 	bool s_repeat, t_repeat; // %gui% choose for s, t if to repeat or clamp
 
 	bool m_bUseMipmaps; // %gui%
+
+	bool m_bUserCanSelectAnObject; // %gui% - need a button to start "selection mode" for the user. Set this to true,
+						           // and the next click will set the following three:
+	bool m_bObjectWasSelected; // Set to true after select
+	double selectX; // Set when clicking
+	double selectY; // Set when clicking - please save this in opengl coords (windowSizeInY - y)
 
 	void drawAllObjects(); // hw1
 	void setProjection();
