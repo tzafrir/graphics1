@@ -175,6 +175,7 @@ class Hw1Object {
 	int c;
 public:
 	int name;
+	
 	bool hasTex;
 	bool hasMipmaps;
 	string png;
@@ -191,15 +192,15 @@ public:
 		double maxX, double maxY, double maxZ) : polygons(polygons),
 	// Default color: white?
 		colorR(1.0), colorG(1.0), colorB(1.0), minX(minX), minY(minY), minZ(minZ),
-		maxX(maxX), maxY(maxY), maxZ(maxZ), hasTex(false), png(""), bmp(NULL) {}
+		maxX(maxX), maxY(maxY), maxZ(maxZ), hasTex(false), png(""), bmp(NULL), hasMipmaps(false) {}
 	Hw1Object(vector<Hw1Polygon*>* polygons, double colorR, double colorG, double colorB,
 		double minX, double minY, double minZ,
 		double maxX, double maxY, double maxZ) :
 		polygons(polygons), colorR(colorR), colorG(colorG), colorB(colorB), minX(minX), minY(minY), minZ(minZ),
-		maxX(maxX), maxY(maxY), maxZ(maxZ), hasTex(false), png(""), bmp(NULL) {}
+		maxX(maxX), maxY(maxY), maxZ(maxZ), hasTex(false), png(""), bmp(NULL), hasMipmaps(false) {}
 
 	void draw(bool drawBoundingBox, bool useTessellation, bool hasColor, double colorR, double colorG, double colorB,
-		unsigned char* tex, bool hasMipmap);
+		unsigned char* tex);
 
 	void drawNormals(bool showNormals, bool drawVertexNormals, double sizeFactor) {
 		for (vector<Hw1Polygon*>::iterator it = polygons->begin();

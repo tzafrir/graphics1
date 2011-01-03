@@ -71,6 +71,7 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "&Load",                       ID_FILE_LOAD
+        MENUITEM "Load global texture...",      ID_FILE_LOADGLOBALTEXTURE
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
     POPUP "&View"
@@ -143,6 +144,8 @@ BEGIN
         MENUITEM "Set Material Parameters...",  ID_MATERIAL_SETMATERIALPARAMETERS
         MENUITEM SEPARATOR
         MENUITEM "Use MipMap",                  ID_MATERIAL_USEMIPMAP
+        MENUITEM "Select Object...",            ID_MATERIAL_SELECTOBJECT
+        MENUITEM "Select Object For Mipmapping...", ID_MATERIAL_SELECTOBJECTFORMIPMAPPING
         POPUP "U Texture Filling"
         BEGIN
             MENUITEM "Repeat",                      ID_UTEXTUREFILLING_REPEAT

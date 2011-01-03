@@ -58,6 +58,9 @@ extern void clearHw1Objects();
 
 int g_w, g_h, g_c;
 int selectedObject = -1;
+bool m_bUseMipmaps;
+bool rotateLock = false;
+
 int findSelectedObject(GLint hits, GLuint buffer[]);
 /////////////////////////////////////////////////////////////////////////////
 // COpenGLView
@@ -169,6 +172,9 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VCOORDINATESSPACE_SCREENSPACE, &COpenGLView::OnUpdateVcoordinatesspaceScreenspace)
 	ON_COMMAND(ID_VCOORDINATESSPACE_MODELSPACE, &COpenGLView::OnVcoordinatesspaceModelspace)
 	ON_UPDATE_COMMAND_UI(ID_VCOORDINATESSPACE_MODELSPACE, &COpenGLView::OnUpdateVcoordinatesspaceModelspace)
+	ON_COMMAND(ID_MATERIAL_SELECTOBJECTFORMIPMAPPING, &COpenGLView::OnMaterialSelectobjectformipmapping)
+	ON_COMMAND(ID_MATERIAL_SELECTOBJECT, &COpenGLView::OnMaterialSelectobject)
+	ON_COMMAND(ID_FILE_LOADGLOBALTEXTURE, &COpenGLView::OnFileLoadglobaltexture)
 	END_MESSAGE_MAP()
 
 
@@ -187,10 +193,10 @@ double COpenGLView::zoomRatioDefault = 0.6;
 
 COpenGLView::COpenGLView() : globalTexture(NULL)
 {
-	Init();
+	Init(true);
 }
 
-void COpenGLView::Init() {
+void COpenGLView::Init(bool first) {
 	// Set default values
 	m_nAxis = ID_AXIS_X;
 	m_nAction = ID_ACTION_ROTATE;
@@ -227,7 +233,9 @@ void COpenGLView::Init() {
 			// FOG PARAMETERS END
 	m_bShowNormals = false;
 	m_bDrawVertexNormals = false;
+	if (first) {
 	m_bMayDraw = false; // Wait until size and center of object is calculated
+	}
 	m_bTessellation = false;
 	m_bDrawBoundingBox = false;
 	m_lNormalScale = 1.0;
@@ -241,7 +249,9 @@ void COpenGLView::Init() {
 			m_lPerspectiveTop = 
 				m_lPerspectiveBottom =
 					m_lPerspectiveBottom = perspectiveDialog::PERS_DEFAULT;
+	
 	m_lPerspectiveDVal = perspectiveDialog::PERS_DEFAULT_D;
+	
 	m_bChoseColor = false;
 	m_backChoseColor = false;
 	m_lTotalSize = 1.0;
@@ -251,6 +261,7 @@ void COpenGLView::Init() {
 	numObjects = 1;
 	numViewsRows = numViewsCol = (int)sqrt(double(numViews));
 	activeView = 0;
+	
 	for (int i=0 ; i<MAX_VIEWS ; i++){
 		for (int k=0 ; k<16 ; k++){
 			viewMatrix[i][k] = (k%5 == 0);
@@ -260,13 +271,19 @@ void COpenGLView::Init() {
 	LightParams &dl = m_lights[0];
 	dl.posX = dl.posY = dl.posZ = 3.0;
 	dl.type = LIGHT_TYPE_POINT;
+	for (int i = 1; i < 8; i++) {
+		LightParams &lt = m_lights[i];
+		lt.enabled = false;
+		lt.posX = lt.posY = lt.posZ = 0.0;
+		lt.dirX = lt.dirY = lt.dirZ = 0.0;
+	}
 
 	m_nLightShading = ID_LIGHT_SHADING_GOURAUD;
 
 	m_bUseModelColors = true;
 	m_bDrawWireframe = false;
 	m_bCullBackFaces = false;
-
+	
 	texGenU[0] = 1.0;
 	texGenU[1] = 0.0;
 	texGenU[2] = 0.0;
@@ -293,6 +310,7 @@ void COpenGLView::Init() {
 	m_bObjectWasSelected = true;
 	selectX = 0;
 	selectY = 0;
+	m_bSelectingForMipmapping = false;
 }
 
 COpenGLView::~COpenGLView()
@@ -731,8 +749,22 @@ void COpenGLView::OnDraw(CDC* pDC)
 		glFlush();
 
 		int hits = glRenderMode(GL_RENDER);
-		selectedObject = findSelectedObject(hits, selected);
+		int name = findSelectedObject(hits, selected);
+
+		if (m_bSelectingForMipmapping) {
+			for (vector<Hw1Object*>::iterator it = hw1Objects.begin(); it != hw1Objects.end(); ++it) {
+				Hw1Object *o = *it;
+				if (o->name == name) {
+					o->hasMipmaps = !o->hasMipmaps;
+					break;
+				}
+			}
+			m_bSelectingForMipmapping = false;
+		} else {
+			selectedObject = name;
+		}
 		m_bObjectWasSelected = false;
+		
 		Invalidate();
 	}
 
@@ -837,6 +869,7 @@ typedef struct texture_ {
 
 void COpenGLView::OnFileLoad() 
 {
+	rotateLock = true;
 	TCHAR szFilters[] = _T ("IRIT Data Files (*.itd)|*.itd|All Files (*.*)|*.*||");
 
 	CFileDialog dlg(TRUE, "itd", "*.itd", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY ,szFilters);
@@ -888,38 +921,6 @@ void COpenGLView::OnFileLoad()
 		m_lTotalSize = (GLfloat)sqrt(x*x + y*y + z*z);
 		mouseSensitivity = sensitivityDialog::SENS_DEFAULT;
 		m_bMayDraw = true;
-		
-		/*
-		PngWrapper p("03.png");
-		if (!p.ReadPng()) {
-			string msg = "Unable to read png file";
-			AfxMessageBox(msg.c_str());
-			throw 0;
-		}
-		g_w = p.GetWidth();
-		g_h = p.GetHeight();
-		g_c = p.GetNumChannels();
-		if (globalTexture != NULL) delete globalTexture;
-		globalTexture = new unsigned char[g_w*g_h*g_c];
-		int curPixel = 0;
-		for (int _h = 0; _h < g_h; _h++) {
-			for (int _w = 0; _w < g_w; _w++) {
-				int pixel = p.GetValue(_w, _h);
-				if (1 == g_c) {
-					globalTexture[curPixel++] = pixel;
-					globalTexture[curPixel++] = pixel;
-					globalTexture[curPixel++] = pixel;
-					continue;
-				}
-				globalTexture[curPixel++] = GET_R(pixel);
-				globalTexture[curPixel++] = GET_G(pixel);
-				globalTexture[curPixel++] = GET_B(pixel);
-				if (4 == g_c) {
-					globalTexture[curPixel++] = GET_A(pixel);
-				}
-			}
-		}
-		*/
 
 		Invalidate();	// force a WM_PAINT for drawing.
 	} 
@@ -1023,12 +1024,11 @@ void COpenGLView::OnUpdateViewCameraview(CCmdUI* pCmdUI)
 void COpenGLView::OnMenu()
 {
 
-	Init();
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
 
 	for (int i=0 ; i<MAX_VIEWS ; i++){
 		for (int k=0 ; k<16 ; k++){
@@ -1048,6 +1048,55 @@ void COpenGLView::OnMenu()
 	m_backChoseColor = false;
 
 	SetSensFactor();
+
+	LightParams &dl = m_lights[0];
+	dl.posX = dl.posY = dl.posZ = 3.0;
+	dl.type = LIGHT_TYPE_POINT;
+	for (int i = 1; i < 8; i++) {
+		LightParams &lt = m_lights[i];
+		lt.enabled = false;
+		lt.posX = lt.posY = lt.posZ = 0.0;
+		lt.dirX = lt.dirY = lt.dirZ = 0.0;
+	}
+
+	m_nLightShading = ID_LIGHT_SHADING_GOURAUD;
+
+	m_bUseModelColors = true;
+	m_bDrawWireframe = false;
+	m_bCullBackFaces = false;
+	
+	texGenU[0] = 1.0;
+	texGenU[1] = 0.0;
+	texGenU[2] = 0.0;
+	texGenU[3] = 1.0;
+
+	texGenV[0] = 0.0;
+	texGenV[1] = -1.0;
+	texGenV[2] = 0.0;
+	texGenV[3] = 1.0;
+
+	m_bGenerateTexturesU = false;
+	m_bGenerateTexturesV = false;
+	m_bGentexUScreenSpace = m_bGentexVScreenSpace = false;
+
+	tex_rotation = 0;
+	tex_scaleU = tex_scaleV = 1.0;
+	tex_transU = tex_transV = .0;
+
+	s_repeat = true;
+	t_repeat = true;
+
+	m_bUseMipmaps = true;
+	m_bUserCanSelectAnObject = false;
+	m_bObjectWasSelected = true;
+	selectX = 0;
+	selectY = 0;
+	m_bSelectingForMipmapping = false;
+
+	if (globalTexture) {
+		delete globalTexture;
+		globalTexture = NULL;
+	}
 
 	Invalidate();
 }
@@ -1190,10 +1239,8 @@ double Hw1Polygon::sizeNormalizeFactor = 0.2;
 
 void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 						bool hasColor, double cR, double cG, double cB,
-							unsigned char *tex, bool hasMipmaps) {
-	if (name == selectedObject) {
-		glColor3f(1.0, 1.0, 1.0); // TODO: Use a different method for selection
-	} else if (hasColor) {
+							unsigned char *tex) {
+	if (hasColor) {
 		// color is an integer in 0-255 range. glColor3fparams are 0.0-1.0 doubles
 		glColor3f(cR/255, cG/255, cB/255);
 	} else {
@@ -1208,7 +1255,7 @@ void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		GLenum format = (c == 4) ? GL_RGBA : GL_RGB;
 		unsigned char* textureSrc = tex ? tex : bmp;
-		if (png != "" && hasMipmaps) {
+		if (png != "" && hasMipmaps && m_bUseMipmaps) {
 			int s = png.find(".png");
 			string base = png.substr(0, s);
 			static texture maps[6];
@@ -1226,7 +1273,7 @@ void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 			glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, format, GL_UNSIGNED_BYTE, textureSrc);
 		}
 		glEnable(GL_TEXTURE_2D);
-		if (hasMipmaps) {
+		if (hasMipmaps && m_bUseMipmaps) {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		} else {
@@ -1243,7 +1290,7 @@ void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 		(*it)->draw(useTessellation);
 	}
 	glPopName();
-	if (shouldDrawBoundingBox) {
+	if (shouldDrawBoundingBox || (name == selectedObject)) {
 		drawBoundingBox();
 	}
 }
@@ -1505,9 +1552,14 @@ void COpenGLView::Translate(int x, int y)
 
 void COpenGLView::OnMouseMove(UINT nFlags, CPoint point)
 {
+	if (rotateLock) {
+		lastClicked = point;
+		rotateLock = false;
+		return;
+	}
 	float deltaX = 0, deltaY = 0;
 	// get the mouse motion, relative to the point where the left button was clicked
-	if((nFlags & MK_LBUTTON) == MK_LBUTTON){
+	if((nFlags & MK_LBUTTON) == MK_LBUTTON && !m_bSelectingForMipmapping){
 		deltaX =  point.x - lastClicked.x;
 		deltaY =  lastClicked.y - point.y;
 		// TODO - fix action on doubleclick file opening
@@ -1643,7 +1695,7 @@ void COpenGLView::drawAllObjects() {
 			++it) {
 
 		Hw1Object* o = *it;
-		o->draw(m_bDrawBoundingBox, m_bTessellation, m_bChoseColor, m_lColorR, m_lColorG, m_lColorB, globalTexture, m_bUseMipmaps);
+		o->draw(m_bDrawBoundingBox, m_bTessellation, m_bChoseColor, m_lColorR, m_lColorG, m_lColorB, globalTexture);
 		o->drawNormals(m_bShowNormals, m_bDrawVertexNormals, m_lTotalSize);
 	}
 }
@@ -1664,9 +1716,12 @@ void COpenGLView::OnLButtonDown(UINT nFlags, CPoint point)
 		}
 		activeView = i*numViewsRows+(numViewsRows-j-1);
 	}
-	m_bObjectWasSelected = true;
-	selectX = point.x;
-	selectY = (m_WindowHeight - point.y);
+	if (m_bUserCanSelectAnObject) {
+		m_bObjectWasSelected = true;
+		selectX = point.x;
+		selectY = (m_WindowHeight - point.y);
+		m_bUserCanSelectAnObject = false;
+	}
 	CView::OnLButtonDown(nFlags, point);
 }
 
@@ -2199,4 +2254,54 @@ int findSelectedObject(GLint hits, GLuint buffer[]) {
 	}
   // Assuming only one name.
   return (int)*ptrNames;
+}
+
+void COpenGLView::OnMaterialSelectobjectformipmapping()
+{
+	m_bUserCanSelectAnObject = true;
+	m_bSelectingForMipmapping = true;
+}
+
+void COpenGLView::OnMaterialSelectobject()
+{
+	m_bUserCanSelectAnObject = true;
+}
+
+void COpenGLView::OnFileLoadglobaltexture()
+{
+	rotateLock = true;
+	CFileDialog dlg(TRUE, "", "*.*", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY);
+
+	if (dlg.DoModal () == IDOK) {
+		string fileName = dlg.GetPathName();
+		PngWrapper p(fileName.c_str());
+		if (!p.ReadPng()) {
+			string msg = "Unable to read png file";
+			AfxMessageBox(msg.c_str());
+			throw 0;
+		}
+		g_w = p.GetWidth();
+		g_h = p.GetHeight();
+		g_c = p.GetNumChannels();
+		if (globalTexture != NULL) delete globalTexture;
+		globalTexture = new unsigned char[g_w*g_h*g_c];
+		int curPixel = 0;
+		for (int _h = 0; _h < g_h; _h++) {
+			for (int _w = 0; _w < g_w; _w++) {
+				int pixel = p.GetValue(_w, _h);
+				if (1 == g_c) {
+					globalTexture[curPixel++] = pixel;
+					globalTexture[curPixel++] = pixel;
+					globalTexture[curPixel++] = pixel;
+					continue;
+				}
+				globalTexture[curPixel++] = GET_R(pixel);
+				globalTexture[curPixel++] = GET_G(pixel);
+				globalTexture[curPixel++] = GET_B(pixel);
+				if (4 == g_c) {
+					globalTexture[curPixel++] = GET_A(pixel);
+				}
+			}
+		}
+	}
 }

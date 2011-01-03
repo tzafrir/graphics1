@@ -121,18 +121,18 @@ private:
 
 	bool s_repeat, t_repeat; // %gui% choose for s, t if to repeat or clamp
 
-	bool m_bUseMipmaps; // %gui%
-
 	bool m_bUserCanSelectAnObject; // %gui% - need a button to start "selection mode" for the user. Set this to true,
 						           // and the next click will set the following three:
 	bool m_bObjectWasSelected; // Set to true after select
 	double selectX; // Set when clicking
 	double selectY; // Set when clicking - please save this in opengl coords (windowSizeInY - y)
 
+	bool m_bSelectingForMipmapping;
+
 	void drawAllObjects(); // hw1
 	void setProjection();
 	void setupLighting(bool firstCall);
-	void Init();
+	void Init(bool first);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -299,6 +299,9 @@ public:
 	afx_msg void OnUpdateVcoordinatesspaceScreenspace(CCmdUI *pCmdUI);
 	afx_msg void OnVcoordinatesspaceModelspace();
 	afx_msg void OnUpdateVcoordinatesspaceModelspace(CCmdUI *pCmdUI);
+	afx_msg void OnMaterialSelectobjectformipmapping();
+	afx_msg void OnMaterialSelectobject();
+	afx_msg void OnFileLoadglobaltexture();
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()
