@@ -37,6 +37,7 @@ using std::vector;
 #include "sensitivityDialog.h"
 #include "perspectiveDialog.h"
 #include "multiViewsDialog.h"
+#include "vectorDialog.h"
 
 extern vector<Hw1Object*> hw1Objects;
 extern void clearHw1Objects();
@@ -143,11 +144,31 @@ BEGIN_MESSAGE_MAP(COpenGLView, CView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_CULLBACKFACES, &COpenGLView::OnUpdateViewCullbackfaces)
 	ON_COMMAND(ID_ACTION_TEXTURETRANSFORMATION, &COpenGLView::OnActionTexturetransformation)
 	ON_UPDATE_COMMAND_UI(ID_ACTION_TEXTURETRANSFORMATION, &COpenGLView::OnUpdateActionTexturetransformation)
+	ON_COMMAND(ID_MATERIAL_GENERATEUVECTOR, &COpenGLView::OnMaterialGenerateuvector)
+	ON_COMMAND(ID_MATERIAL_GENERATEVVECTOR, &COpenGLView::OnMaterialGeneratevvector)
+	ON_COMMAND(ID_MATERIAL_USEMIPMAP, &COpenGLView::OnMaterialUsemipmap)
+	ON_UPDATE_COMMAND_UI(ID_MATERIAL_USEMIPMAP, &COpenGLView::OnUpdateMaterialUsemipmap)
+	ON_COMMAND(ID_UTEXTUREFILLING_REPEAT, &COpenGLView::OnUtexturefillingRepeat)
+	ON_UPDATE_COMMAND_UI(ID_UTEXTUREFILLING_REPEAT, &COpenGLView::OnUpdateUtexturefillingRepeat)
 	ON_COMMAND(ID_MATERIAL_USEUTEXTURE, &COpenGLView::OnMaterialUseutexture)
 	ON_UPDATE_COMMAND_UI(ID_MATERIAL_USEUTEXTURE, &COpenGLView::OnUpdateMaterialUseutexture)
+	ON_COMMAND(ID_UTEXTUREFILLING_CLAMP, &COpenGLView::OnUtexturefillingClamp)
+	ON_UPDATE_COMMAND_UI(ID_UTEXTUREFILLING_CLAMP, &COpenGLView::OnUpdateUtexturefillingClamp)
+	ON_COMMAND(ID_VTEXTUREFILLING_REPEAT, &COpenGLView::OnVtexturefillingRepeat)
+	ON_UPDATE_COMMAND_UI(ID_VTEXTUREFILLING_REPEAT, &COpenGLView::OnUpdateVtexturefillingRepeat)
+	ON_COMMAND(ID_VTEXTUREFILLING_CLAMP, &COpenGLView::OnVtexturefillingClamp)
+	ON_UPDATE_COMMAND_UI(ID_VTEXTUREFILLING_CLAMP, &COpenGLView::OnUpdateVtexturefillingClamp)
 	ON_COMMAND(ID_MATERIAL_USEVTEXTURE, &COpenGLView::OnMaterialUsevtexture)
 	ON_UPDATE_COMMAND_UI(ID_MATERIAL_USEVTEXTURE, &COpenGLView::OnUpdateMaterialUsevtexture)
-END_MESSAGE_MAP()
+	ON_COMMAND(ID_UCOORDINATESSPACE_SCREENSPACE, &COpenGLView::OnUcoordinatesspaceScreenspace)
+	ON_UPDATE_COMMAND_UI(ID_UCOORDINATESSPACE_SCREENSPACE, &COpenGLView::OnUpdateUcoordinatesspaceScreenspace)
+	ON_COMMAND(ID_UCOORDINATESSPACE_MODELSPACE, &COpenGLView::OnUcoordinatesspaceModelspace)
+	ON_UPDATE_COMMAND_UI(ID_UCOORDINATESSPACE_MODELSPACE, &COpenGLView::OnUpdateUcoordinatesspaceModelspace)
+	ON_COMMAND(ID_VCOORDINATESSPACE_SCREENSPACE, &COpenGLView::OnVcoordinatesspaceScreenspace)
+	ON_UPDATE_COMMAND_UI(ID_VCOORDINATESSPACE_SCREENSPACE, &COpenGLView::OnUpdateVcoordinatesspaceScreenspace)
+	ON_COMMAND(ID_VCOORDINATESSPACE_MODELSPACE, &COpenGLView::OnVcoordinatesspaceModelspace)
+	ON_UPDATE_COMMAND_UI(ID_VCOORDINATESSPACE_MODELSPACE, &COpenGLView::OnUpdateVcoordinatesspaceModelspace)
+	END_MESSAGE_MAP()
 
 
 // A patch to fix GLaux disappearance from VS2005 to VS2008
@@ -606,6 +627,8 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 	if (m_bCullBackFaces) {
 		glEnable(GL_CULL_FACE);
+	}else{
+		glDisable(GL_CULL_FACE);
 	}
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -1961,7 +1984,7 @@ void COpenGLView::OnViewCullbackfaces()
 
 void COpenGLView::OnUpdateViewCullbackfaces(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetCheck(m_bUseModelColors == true );
+	pCmdUI->SetCheck(m_bCullBackFaces == true );
 }
 
 void COpenGLView::OnActionTexturetransformation()
@@ -1973,23 +1996,144 @@ void COpenGLView::OnUpdateActionTexturetransformation(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bTransformTexture == true );
 }
+void COpenGLView::OnMaterialGenerateuvector()
+{
+	vectorDialog dlg(texGenU[0], texGenU[1], texGenU[2]);
+
+	if (dlg.DoModal() == IDOK) {
+		texGenU[0] = dlg.getX();
+		texGenU[1] = dlg.getY();
+		texGenU[2] = dlg.getZ();
+
+		m_bGentexUScreenSpace = true;
+		Invalidate();
+	}
+}
+
+void COpenGLView::OnMaterialGeneratevvector()
+{
+	vectorDialog dlg(texGenV[0], texGenV[1], texGenV[2]);
+
+	if (dlg.DoModal() == IDOK) {
+		texGenV[0] = dlg.getX();
+		texGenV[1] = dlg.getY();
+		texGenV[2] = dlg.getZ();
+
+		m_bGentexVScreenSpace = true;
+		Invalidate();
+	}
+}
+
+
+
+
+void COpenGLView::OnMaterialUsemipmap()
+{
+	m_bUseMipmaps = (!m_bUseMipmaps);
+}
+
+void COpenGLView::OnUpdateMaterialUsemipmap(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bUseMipmaps == true );
+}
 
 void COpenGLView::OnMaterialUseutexture()
 {
-	m_bGenerateTexturesU = (!m_bGenerateTexturesU);
+	m_bGenerateTexturesU = (!m_bGenerateTexturesU );
 }
 
 void COpenGLView::OnUpdateMaterialUseutexture(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetCheck(m_bGenerateTexturesU == true );
+	pCmdUI->SetCheck(m_bGenerateTexturesU == false );
 }
-
 void COpenGLView::OnMaterialUsevtexture()
 {
-	m_bGenerateTexturesV = (!m_bGenerateTexturesV);
+	m_bGenerateTexturesV = (!m_bGenerateTexturesV );
 }
 
 void COpenGLView::OnUpdateMaterialUsevtexture(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetCheck(m_bGenerateTexturesV == true );
+	pCmdUI->SetCheck(m_bGenerateTexturesV == false );
+}
+
+void COpenGLView::OnUtexturefillingRepeat()
+{
+	s_repeat = true;
+}
+
+void COpenGLView::OnUpdateUtexturefillingRepeat(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(s_repeat == true );
+}
+
+void COpenGLView::OnUtexturefillingClamp()
+{
+	s_repeat = false;
+}
+
+void COpenGLView::OnUpdateUtexturefillingClamp(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(s_repeat == false );
+}
+
+void COpenGLView::OnVtexturefillingRepeat()
+{
+	t_repeat = true;
+}
+
+void COpenGLView::OnUpdateVtexturefillingRepeat(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(t_repeat == true );
+}
+
+void COpenGLView::OnVtexturefillingClamp()
+{
+	t_repeat = false;
+}
+
+void COpenGLView::OnUpdateVtexturefillingClamp(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(t_repeat == false );
+}
+
+
+
+void COpenGLView::OnUcoordinatesspaceScreenspace()
+{
+	m_bGentexUScreenSpace = true;
+}
+
+void COpenGLView::OnUpdateUcoordinatesspaceScreenspace(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bGentexUScreenSpace == true );
+}
+
+void COpenGLView::OnUcoordinatesspaceModelspace()
+{
+	m_bGentexUScreenSpace = false;
+}
+
+void COpenGLView::OnUpdateUcoordinatesspaceModelspace(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bGentexUScreenSpace == false );
+}
+
+void COpenGLView::OnVcoordinatesspaceScreenspace()
+{
+	m_bGentexVScreenSpace = true;
+}
+
+void COpenGLView::OnUpdateVcoordinatesspaceScreenspace(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bGentexVScreenSpace == true );
+}
+
+void COpenGLView::OnVcoordinatesspaceModelspace()
+{
+	m_bGentexVScreenSpace = false;
+}
+
+void COpenGLView::OnUpdateVcoordinatesspaceModelspace(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bGentexVScreenSpace == false );
 }
