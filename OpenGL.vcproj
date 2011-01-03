@@ -387,6 +387,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\vectorDialog.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -454,6 +458,10 @@
 			</File>
 			<File
 				RelativePath="StdAfx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\vectorDialog.h"
 				>
 			</File>
 			<Filter

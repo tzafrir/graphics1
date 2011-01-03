@@ -142,8 +142,32 @@ BEGIN
     BEGIN
         MENUITEM "Set Material Parameters...",  ID_MATERIAL_SETMATERIALPARAMETERS
         MENUITEM SEPARATOR
-        MENUITEM "Use U Texture",               ID_MATERIAL_USEUTEXTURE
-        MENUITEM "Use V Texture",               ID_MATERIAL_USEVTEXTURE
+        MENUITEM "Use MipMap",                  ID_MATERIAL_USEMIPMAP
+        POPUP "U Texture Filling"
+        BEGIN
+            MENUITEM "Repeat",                      ID_UTEXTUREFILLING_REPEAT
+            MENUITEM "Clamp",                       ID_UTEXTUREFILLING_CLAMP
+        END
+        POPUP "V Texture Filling"
+        BEGIN
+            MENUITEM "Repeat",                      ID_VTEXTUREFILLING_REPEAT
+            MENUITEM "Clamp",                       ID_VTEXTUREFILLING_CLAMP
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Use model U Coordinates",     ID_MATERIAL_USEUTEXTURE
+        MENUITEM "Use model V Coordinates",     ID_MATERIAL_USEVTEXTURE
+        MENUITEM "Generate U Vector...",        ID_MATERIAL_GENERATEUVECTOR
+        MENUITEM "Generate V Vector...",        ID_MATERIAL_GENERATEVVECTOR
+        POPUP "U Coordinates Space"
+        BEGIN
+            MENUITEM "Model Space",                 ID_UCOORDINATESSPACE_MODELSPACE
+            MENUITEM "Screen Space",                ID_UCOORDINATESSPACE_SCREENSPACE
+        END
+        POPUP "V Coordinates Space"
+        BEGIN
+            MENUITEM "Model Space",                 ID_VCOORDINATESSPACE_MODELSPACE
+            MENUITEM "Screen Space",                ID_VCOORDINATESSPACE_SCREENSPACE
+        END
     END
     POPUP "&Help"
     BEGIN
@@ -313,6 +337,22 @@ BEGIN
     COMBOBOX        IDC_COMBO_MODE,50,60,109,58,CBS_DROPDOWN | WS_TABSTOP
 END
 
+IDD_VECTOR_DLG DIALOGEX 0, 0, 160, 60
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Vector Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,89,39,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,21,39,50,14
+    LTEXT           "Vector",IDC_STATIC,9,19,22,8
+    EDITTEXT        IDC_TEXT_X,32,17,37,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TEXT_Y,74,17,37,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TEXT_Z,116,17,37,14,ES_AUTOHSCROLL
+    LTEXT           "X",IDC_STATIC,48,8,8,8
+    LTEXT           "Y",IDC_STATIC,89,7,8,8
+    LTEXT           "Z",IDC_STATIC,132,7,8,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -406,6 +446,14 @@ BEGIN
         RIGHTMARGIN, 168
         TOPMARGIN, 7
         BOTTOMMARGIN, 125
+    END
+
+    IDD_VECTOR_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 153
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 53
     END
 END
 #endif    // APSTUDIO_INVOKED

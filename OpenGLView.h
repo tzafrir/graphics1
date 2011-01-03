@@ -275,10 +275,30 @@ public:
 	afx_msg void OnUpdateViewCullbackfaces(CCmdUI *pCmdUI);
 	afx_msg void OnActionTexturetransformation();
 	afx_msg void OnUpdateActionTexturetransformation(CCmdUI *pCmdUI);
+	afx_msg void OnMaterialGenerateuvector();
+	afx_msg void OnMaterialGeneratevvector();
+	afx_msg void OnMaterialUsemipmap();
+	afx_msg void OnUpdateMaterialUsemipmap(CCmdUI *pCmdUI);
+	afx_msg void OnUtexturefillingRepeat();
+	afx_msg void OnUpdateUtexturefillingRepeat(CCmdUI *pCmdUI);
 	afx_msg void OnMaterialUseutexture();
 	afx_msg void OnUpdateMaterialUseutexture(CCmdUI *pCmdUI);
+	afx_msg void OnUtexturefillingClamp();
+	afx_msg void OnUpdateUtexturefillingClamp(CCmdUI *pCmdUI);
+	afx_msg void OnVtexturefillingRepeat();
+	afx_msg void OnUpdateVtexturefillingRepeat(CCmdUI *pCmdUI);
+	afx_msg void OnVtexturefillingClamp();
+	afx_msg void OnUpdateVtexturefillingClamp(CCmdUI *pCmdUI);
 	afx_msg void OnMaterialUsevtexture();
 	afx_msg void OnUpdateMaterialUsevtexture(CCmdUI *pCmdUI);
+	afx_msg void OnUcoordinatesspaceScreenspace();
+	afx_msg void OnUpdateUcoordinatesspaceScreenspace(CCmdUI *pCmdUI);
+	afx_msg void OnUcoordinatesspaceModelspace();
+	afx_msg void OnUpdateUcoordinatesspaceModelspace(CCmdUI *pCmdUI);
+	afx_msg void OnVcoordinatesspaceScreenspace();
+	afx_msg void OnUpdateVcoordinatesspaceScreenspace(CCmdUI *pCmdUI);
+	afx_msg void OnVcoordinatesspaceModelspace();
+	afx_msg void OnUpdateVcoordinatesspaceModelspace(CCmdUI *pCmdUI);
 };
 #ifndef _DEBUG  // debug version in OpenGLView.cpp
 inline COpenGLDoc* COpenGLView::GetDocument()
