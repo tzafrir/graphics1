@@ -225,6 +225,8 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 				} else {
 					newVertex = new Hw1Vertex(x, y, z);
 				}
+	      static int name = 0;
+	      newVertex->name = name++;
 				if (PVertex->Attr && PVertex->Attr->Type == IP_ATTR_UV) {
 					newVertex->hasUV = true;
 					newVertex->u = PVertex->Attr->U.UV[0];
@@ -255,8 +257,6 @@ bool CGSkelStoreData(IPObjectStruct *PObj)
 		newObject->png = CGSkelGetObjectPTexture(PObj);
 		newObject->hasTex = true;
 	}
-	static int name = 0;
-	newObject->name = name++;
 	hw1Objects.push_back(newObject);
 	return true;
 }

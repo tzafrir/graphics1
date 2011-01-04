@@ -38,6 +38,7 @@ class Hw1Vertex {
 	Hw1Vertex(const Hw1Vertex& v) {}
 	Hw1Vertex& operator=(const Hw1Vertex& v) {}
 public:
+  int name;
 	Hw1Vertex(double x, double y, double z) : x(x), y(y), z(z),
 		normal(18.18, 18.18, 18.18), hasNormal_(false), hasUV(false) {}
 	Hw1Vertex(double x, double y, double z, double normalX, double normalY, double normalZ) :

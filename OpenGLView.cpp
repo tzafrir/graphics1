@@ -699,7 +699,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
-		static const double radius = 5.0;
+		static const double radius = 10.0;
 		GLint viewport[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
 		gluPickMatrix(selectX, selectY, radius, radius, viewport);
@@ -750,6 +750,7 @@ void COpenGLView::OnDraw(CDC* pDC)
 
 		int hits = glRenderMode(GL_RENDER);
 		int name = findSelectedObject(hits, selected);
+		// Add a breakpoint here and check that name != -1
 
 		if (m_bSelectingForMipmapping) {
 			for (vector<Hw1Object*>::iterator it = hw1Objects.begin(); it != hw1Objects.end(); ++it) {
@@ -1283,13 +1284,11 @@ void Hw1Object::draw(bool shouldDrawBoundingBox, bool useTessellation,
 	} else {
 		glDisable(GL_TEXTURE_2D);
 	}
-	glPushName(name);
 	for (vector<Hw1Polygon*>::iterator it = polygons->begin();
 			it != polygons->end();
 			++it) {
 		(*it)->draw(useTessellation);
 	}
-	glPopName();
 	if (shouldDrawBoundingBox || (name == selectedObject)) {
 		drawBoundingBox();
 	}
@@ -1354,7 +1353,9 @@ void Hw1Polygon::draw(bool useTessellation) {
 		if (v->hasUV) {
 			glTexCoord2f(v->u, v->v);
 		}
+		pushName(v->name);
 		glVertex3f(v->getX(), v->getY(), v->getZ());
+		popName();
 	}
 	glEnd();
 }
